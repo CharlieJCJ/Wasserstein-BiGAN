@@ -1,3 +1,4 @@
+from tkinter import W
 import torch
 import torch.nn as nn
 import torch.backends.cudnn as cudnn
@@ -5,7 +6,7 @@ import matplotlib.pyplot as plt
 from torch.optim import Adam
 from torch.utils import data
 from torch.nn import Conv2d, ConvTranspose2d, BatchNorm2d, LeakyReLU, ReLU, Tanh
-from util import DeterministicConditional, GaussianConditional, JointCritic, WALI, ResNetSimCLR
+from util import DeterministicConditional, GaussianConditional, JointCritic, WALI
 from torchvision import datasets, transforms, utils
 
 
@@ -30,10 +31,19 @@ LEARNING_RATE = 1e-4
 BETA1 = 0.5
 BETA2 = 0.9
 
-# dataset path
-CIFAR_PATH = r'~\torch\data\CIFAR10'
 
-# FIXME - New training pipeline uses SimClr encoder.
+
+# def create_encoder():
+#   mapping = nn.Sequential(
+#     Conv2d(NUM_CHANNELS, 32, 5, 1, bias=False), BatchNorm2d(32), LeakyReLU(LEAK, inplace=True),
+#     Conv2d(32, 64, 4, 2, bias=False), BatchNorm2d(64), LeakyReLU(LEAK, inplace=True),
+#     Conv2d(64, 128, 4, 1, bias=False), BatchNorm2d(128), LeakyReLU(LEAK, inplace=True),
+#     Conv2d(128, 256, 4, 2, bias=False), BatchNorm2d(256), LeakyReLU(LEAK, inplace=True),
+#     Conv2d(256, 512, 4, 1, bias=False), BatchNorm2d(512), LeakyReLU(LEAK, inplace=True),
+#     Conv2d(512, 512, 1, 1, bias=False), BatchNorm2d(512), LeakyReLU(LEAK, inplace=True),
+#     Conv2d(512, 2 * NLAT, 1, 1))
+#   return GaussianConditional(mapping)
+
 def create_encoder():
   mapping = nn.Sequential(
     Conv2d(NUM_CHANNELS, DIM, 4, 2, 1, bias=False), BatchNorm2d(DIM), ReLU(inplace=True),
@@ -43,6 +53,16 @@ def create_encoder():
     Conv2d(DIM * 4, NLAT, 1, 1, 0))
   return DeterministicConditional(mapping)
 
+# def create_generator():
+#   mapping = nn.Sequential(
+#     ConvTranspose2d(NLAT, 256, 4, 1, bias=False), BatchNorm2d(256), LeakyReLU(LEAK, inplace=True),
+#     ConvTranspose2d(256, 128, 4, 2, bias=False), BatchNorm2d(128), LeakyReLU(LEAK, inplace=True),
+#     ConvTranspose2d(128, 64, 4, 1, bias=False), BatchNorm2d(64), LeakyReLU(LEAK, inplace=True),
+#     ConvTranspose2d(64, 32, 4, 2, bias=False), BatchNorm2d(32), LeakyReLU(LEAK, inplace=True),
+#     ConvTranspose2d(32, 32, 5, 1, bias=False), BatchNorm2d(32), LeakyReLU(LEAK, inplace=True),
+#     ConvTranspose2d(32, 32, 1, 1, bias=False), BatchNorm2d(32), LeakyReLU(LEAK, inplace=True),
+#     Conv2d(32, NUM_CHANNELS, 1, 1, bias=False), Tanh())
+#   return DeterministicConditional(mapping)
 
 def create_generator():
   mapping = nn.Sequential(
@@ -52,6 +72,24 @@ def create_generator():
     ConvTranspose2d(DIM, NUM_CHANNELS, 4, 2, 1, bias=False), Tanh())
   return DeterministicConditional(mapping)
 
+# def create_critic():
+#   x_mapping = nn.Sequential(
+#     Conv2d(NUM_CHANNELS, 32, 5, 1), LeakyReLU(LEAK),
+#     Conv2d(32, 64, 4, 2), LeakyReLU(LEAK),
+#     Conv2d(64, 128, 4, 1), LeakyReLU(LEAK),
+#     Conv2d(128, 256, 4, 2), LeakyReLU(LEAK),
+#     Conv2d(256, 512, 4, 1), LeakyReLU(LEAK))
+
+#   z_mapping = nn.Sequential(
+#     Conv2d(NLAT, 512, 1, 1, bias=False), LeakyReLU(LEAK),
+#     Conv2d(512, 512, 1, 1, bias=False), LeakyReLU(LEAK))
+
+#   joint_mapping = nn.Sequential(
+#     Conv2d(1024, 1024, 1, 1), LeakyReLU(LEAK),
+#     Conv2d(1024, 1024, 1, 1), LeakyReLU(LEAK),
+#     Conv2d(1024, 1, 1, 1))
+
+#   return JointCritic(x_mapping, z_mapping, joint_mapping)
 
 def create_critic():
   x_mapping = nn.Sequential(
@@ -73,16 +111,15 @@ def create_critic():
 
 
 def create_WALI():
-  E = ResNetSimCLR(base_model=args.arch, out_dim=args.out_dim)
+  E = create_encoder()
   G = create_generator()
   C = create_critic()
   wali = WALI(E, G, C)
   return wali
 
-# Training pipeline function
+
 def main():
-  device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-  print('Device:', device)
+  device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
   wali = create_WALI().to(device)
 
   optimizerEG = Adam(list(wali.get_encoder_parameters()) + list(wali.get_generator_parameters()), 
@@ -93,7 +130,7 @@ def main():
   transform = transforms.Compose([
     transforms.ToTensor(),
     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
-  svhn = datasets.CIFAR10(CIFAR_PATH, download=True, train=True, transform=transform)
+  svhn = datasets.CIFAR10(r'~\torch\data\CIFAR10', download=True, train=True, transform=transform)
   loader = data.DataLoader(svhn, BATCH_SIZE, shuffle=True, num_workers=2)
   noise = torch.randn(64, NLAT, 1, 1, device=device)
 
@@ -104,7 +141,7 @@ def main():
 
   while curr_iter < ITER:
     for batch_idx, (x, _) in enumerate(loader, 1):
-      print("batch_idx: ", batch_idx)
+      # print("batch_idx: ", batch_idx)
       x = x.to(device)
 
       if curr_iter == 0:

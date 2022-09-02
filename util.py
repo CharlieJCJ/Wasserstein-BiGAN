@@ -27,7 +27,7 @@ class MaxOut(nn.Module):
     output, _ = input.max(dim=2)
     return output
 
-
+# A deterministic conditional mapping. Used as an encoder or a generator.
 class DeterministicConditional(nn.Module):
   def __init__(self, mapping, shift=None):
     """ A deterministic conditional mapping. Used as an encoder or a generator.
@@ -108,7 +108,7 @@ class JointCritic(nn.Module):
     output = self.joint_net(joint_input)
     return output
 
-
+# End-to-end model here
 class WALI(nn.Module):
   def __init__(self, E, G, C):
     """ Adversarially learned inference (a.k.a. bi-directional GAN) with Wasserstein critic.
@@ -169,3 +169,59 @@ class WALI(nn.Module):
     EG_loss = torch.mean(data_preds - sample_preds)
     C_loss = -EG_loss + lamb * self.calculate_grad_penalty(x.data, z_hat.data, x_tilde.data, z.data)
     return C_loss, EG_loss
+
+############################################################################################################
+# Merging simclr codebase here
+class Projection(nn.Module):
+  """
+  Creates projection head
+  Args:
+    n_in (int): Number of input features
+    n_hidden (int): Number of hidden features
+    n_out (int): Number of output features
+    use_bn (bool): Whether to use batch norm
+  """
+  def __init__(self, n_in: int, n_hidden: int, n_out: int,
+               use_bn: bool = True):
+    super().__init__()
+    
+    # No point in using bias if we've batch norm
+    self.lin1 = nn.Linear(n_in, n_hidden, bias=not use_bn)
+    self.bn = nn.BatchNorm1d(n_hidden) if use_bn else nn.Identity()
+    self.relu = nn.ReLU()
+    # No bias for the final linear layer
+    self.lin2 = nn.Linear(n_hidden, n_out, bias=False)
+  
+  def forward(self, x):
+    x = self.lin1(x)
+    x = self.bn(x)
+    x = self.relu(x)
+    x = self.lin2(x)
+    return x
+
+class ResNetSimCLR(nn.Module):
+
+    def __init__(self, base_model, out_dim):
+        super(ResNetSimCLR, self).__init__()
+        self.resnet_dict = {"resnet18": models.resnet18(pretrained=False, num_classes=out_dim),
+                            "resnet50": models.resnet50(pretrained=False, num_classes=out_dim)}
+        
+        self.backbone = self._get_basemodel(base_model)
+        dim_mlp = self.backbone.fc.in_features
+        self.backbone.fc = nn.Identity()
+        self.projection = Projection(512, 512,
+                                 128, False)
+
+    def _get_basemodel(self, model_name):
+        try:
+            model = self.resnet_dict[model_name]
+        except KeyError:
+            raise InvalidBackboneError(
+                "Invalid backbone architecture. Check the config file and pass one of: resnet18 or resnet50")
+        else:
+            return model
+
+    def forward(self, x):
+        x = self.backbone(x)
+        x = self.projection(x)
+        return x
