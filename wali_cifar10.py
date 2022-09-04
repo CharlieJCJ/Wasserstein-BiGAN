@@ -4,9 +4,11 @@ import torch.backends.cudnn as cudnn
 import matplotlib.pyplot as plt
 from torch.optim import Adam
 from torch.utils import data
-from torch.nn import Conv2d, ConvTranspose2d, BatchNorm2d, LeakyReLU, ReLU, Tanh
-from util import DeterministicConditional, GaussianConditional, JointCritic, WALI, ResNetSimCLR
+from torch.nn import Conv2d, BatchNorm2d, LeakyReLU, ReLU, Tanh
+from util import JointCritic, WALI, ResNetSimCLR
 from torchvision import datasets, transforms, utils
+
+from stylegan2 import Generator, Discriminator
 
 
 cudnn.benchmark = True
@@ -19,8 +21,10 @@ BATCH_SIZE = 64
 ITER = 200000
 IMAGE_SIZE = 32
 NUM_CHANNELS = 3
-DIM = 128
-NLAT = 100
+H_DIM = 512
+Z_DIM = 128
+DIM_D = 2048 # Need to check the size in stylegan2.py using test()
+NLAT = 512
 LEAK = 0.2
 
 C_ITERS = 5       # critic iterations
@@ -34,38 +38,19 @@ BETA2 = 0.9
 CIFAR_PATH = r'~\torch\data\CIFAR10'
 
 # FIXME - New training pipeline uses SimClr encoder.
-def create_encoder():
-  mapping = nn.Sequential(
-    Conv2d(NUM_CHANNELS, DIM, 4, 2, 1, bias=False), BatchNorm2d(DIM), ReLU(inplace=True),
-    Conv2d(DIM, DIM * 2, 4, 2, 1, bias=False), BatchNorm2d(DIM * 2), ReLU(inplace=True),
-    Conv2d(DIM * 2, DIM * 4, 4, 2, 1, bias=False), BatchNorm2d(DIM * 4), ReLU(inplace=True),
-    Conv2d(DIM * 4, DIM * 4, 4, 1, 0, bias=False), BatchNorm2d(DIM * 4), ReLU(inplace=True),
-    Conv2d(DIM * 4, NLAT, 1, 1, 0))
-  return DeterministicConditional(mapping)
-
 
 def create_generator():
-  mapping = nn.Sequential(
-    ConvTranspose2d(NLAT, DIM * 4, 4, 1, 0, bias=False), BatchNorm2d(DIM * 4), ReLU(inplace=True),
-    ConvTranspose2d(DIM * 4, DIM * 2, 4, 2, 1, bias=False), BatchNorm2d(DIM * 2), ReLU(inplace=True),
-    ConvTranspose2d(DIM * 2, DIM, 4, 2, 1, bias=False), BatchNorm2d(DIM), ReLU(inplace=True),
-    ConvTranspose2d(DIM, NUM_CHANNELS, 4, 2, 1, bias=False), Tanh())
-  return DeterministicConditional(mapping)
-
+  return Generator(IMAGE_SIZE, H_DIM, 8)
 
 def create_critic():
-  x_mapping = nn.Sequential(
-    Conv2d(NUM_CHANNELS, DIM, 4, 2, 1), LeakyReLU(LEAK),
-    Conv2d(DIM, DIM * 2, 4, 2, 1), LeakyReLU(LEAK),
-    Conv2d(DIM * 2, DIM * 4, 4, 2, 1), LeakyReLU(LEAK),
-    Conv2d(DIM * 4, DIM * 4, 4, 1, 0), LeakyReLU(LEAK))
+  x_mapping = Discriminator(IMAGE_SIZE)
 
   z_mapping = nn.Sequential(
     Conv2d(NLAT, 512, 1, 1, 0), LeakyReLU(LEAK),
     Conv2d(512, 512, 1, 1, 0), LeakyReLU(LEAK))
-
+  
   joint_mapping = nn.Sequential(
-    Conv2d(DIM * 4 + 512, 1024, 1, 1, 0), LeakyReLU(LEAK),
+    Conv2d(DIM_D + 512, 1024, 1, 1, 0), LeakyReLU(LEAK),
     Conv2d(1024, 1024, 1, 1, 0), LeakyReLU(LEAK),
     Conv2d(1024, 1, 1, 1, 0))
 
@@ -73,7 +58,7 @@ def create_critic():
 
 
 def create_WALI():
-  E = ResNetSimCLR(base_model=args.arch, out_dim=args.out_dim)
+  E = ResNetSimCLR(H_DIM, Z_DIM)
   G = create_generator()
   C = create_critic()
   wali = WALI(E, G, C)

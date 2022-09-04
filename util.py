@@ -4,6 +4,8 @@ import torch.nn.init as init
 import torch.nn.functional as F
 import torch.autograd as autograd
 
+from resnet import ResNet50
+
 
 def log_odds(p):
   p = torch.clamp(p.mean(dim=0), 1e-7, 1-1e-7)
@@ -200,29 +202,18 @@ class Projection(nn.Module):
     x = self.lin2(x)
     return x
 
+
+
 class ResNetSimCLR(nn.Module):
 
-    def __init__(self, base_model, out_dim):
+    def __init__(self, h_dim, z_dim):
         super(ResNetSimCLR, self).__init__()
-        self.resnet_dict = {"resnet18": models.resnet18(pretrained=False, num_classes=out_dim),
-                            "resnet50": models.resnet50(pretrained=False, num_classes=out_dim)}
         
-        self.backbone = self._get_basemodel(base_model)
-        dim_mlp = self.backbone.fc.in_features
-        self.backbone.fc = nn.Identity()
-        self.projection = Projection(512, 512,
-                                 128, False)
-
-    def _get_basemodel(self, model_name):
-        try:
-            model = self.resnet_dict[model_name]
-        except KeyError:
-            raise InvalidBackboneError(
-                "Invalid backbone architecture. Check the config file and pass one of: resnet18 or resnet50")
-        else:
-            return model
+        self.backbone = ResNet50()
+        self.projection = Projection(h_dim, 512,
+                                 z_dim, False)
 
     def forward(self, x):
-        x = self.backbone(x)
-        x = self.projection(x)
-        return x
+        h = self.backbone(x)
+        z = self.projection(x)
+        return h, z
