@@ -113,6 +113,8 @@ def main():
 
       z = torch.randn(x.size(0), NLAT, 1, 1).to(device)
       C_loss, EG_loss = wali(x, z, lamb=LAMBDA)
+      Recon = ...
+      Recon.backward()
       # print("batch_idx: ", C_loss, EG_loss)
       if C_update:
         optimizerC.zero_grad()
@@ -120,7 +122,7 @@ def main():
         C_losses.append(C_loss.item())
         optimizerC.step()
         C_iter += 1
-
+        # add reconstruction loss backward() here
         if C_iter == C_ITERS:
           C_iter = 0
           C_update, EG_update = False, True
@@ -132,7 +134,7 @@ def main():
         EG_losses.append(EG_loss.item())
         optimizerEG.step()
         EG_iter += 1
-
+        # construction loss backward() here
         if EG_iter == EG_ITERS:
           EG_iter = 0
           C_update, EG_update = True, False

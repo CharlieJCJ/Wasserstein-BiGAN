@@ -168,7 +168,8 @@ class WALI(nn.Module):
     data_preds, sample_preds = self.criticize(x, z_hat, x_tilde, z)
     EG_loss = torch.mean(data_preds - sample_preds)
     C_loss = -EG_loss + lamb * self.calculate_grad_penalty(x.data, z_hat.data, x_tilde.data, z.data)
-    return C_loss, EG_loss
+    R
+    return C_loss, EG_loss, R
 
 ############################################################################################################
 # Merging simclr codebase here
