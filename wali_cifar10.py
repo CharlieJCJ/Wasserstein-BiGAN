@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from torch.optim import Adam
 from torch.utils import data
 from torch.nn import Conv2d, BatchNorm2d, LeakyReLU, ReLU, Tanh
-from util import JointCritic, WALI, ResNetSimCLR
+from util import JointCritic, WALI, ResNetSimCLR, ContrastiveLearningDataset
 from torchvision import datasets, transforms, utils
 
 from stylegan2 import Generator, Discriminator
@@ -70,25 +70,45 @@ def main():
   print('Device:', device)
   wali = create_WALI().to(device)
 
+  # FIXME - wali.get_encoder_parameters() might be the entire resnet + MLP.
   optimizerEG = Adam(list(wali.get_encoder_parameters()) + list(wali.get_generator_parameters()), 
     lr=LEARNING_RATE, betas=(BETA1, BETA2))
   optimizerC = Adam(wali.get_critic_parameters(), 
     lr=LEARNING_RATE, betas=(BETA1, BETA2))
 
-  transform = transforms.Compose([
-    transforms.ToTensor(),
-    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
-  svhn = datasets.CIFAR10(CIFAR_PATH, download=True, train=True, transform=transform)
-  loader = data.DataLoader(svhn, BATCH_SIZE, shuffle=True, num_workers=2)
-  noise = torch.randn(64, NLAT, 1, 1, device=device)
+  # SimCLR Encoder and training scheduler
+  optimizer = torch.optim.Adam(wali.get_encoder_parameters(), 0.0003, weight_decay=1e-4)
 
+  scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=len(train_loader), eta_min=0,
+                                                           last_epoch=-1)
+
+  # Load CIFAR10 dataset
+  dataset = ContrastiveLearningDataset("./datasets")
+  # Each have 2 views (2 views + original image)
+  train_dataset = dataset.get_dataset("cifar10", 2)
+
+  train_loader = torch.utils.data.DataLoader(
+      train_dataset, batch_size=256, shuffle=True,
+      num_workers=12, pin_memory=True, drop_last=True)
+  
+  # Legacy code
+  # transform = transforms.Compose([
+  #   transforms.ToTensor(),
+  #   transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+  # svhn = datasets.CIFAR10(CIFAR_PATH, download=True, train=True, transform=transform)
+  # loader = data.DataLoader(svhn, BATCH_SIZE, shuffle=True, num_workers=2)
+  noise = torch.randn(64, NLAT, 1, 1, device=device)
+  
+  test_size(train_loader)
+  return
+  # FIXME
   EG_losses, C_losses = [], []
   curr_iter = C_iter = EG_iter = 0
   C_update, EG_update = True, False
   print('Training starts...')
 
   while curr_iter < ITER:
-    for batch_idx, (x, _) in enumerate(loader, 1):
+    for batch_idx, (x, _) in enumerate(train_loader, 1):
       print("batch_idx: ", batch_idx)
       x = x.to(device)
 
@@ -96,6 +116,7 @@ def main():
         init_x = x
         curr_iter += 1
 
+      # Sample z from a prior distribution ~ N(0, 1)
       z = torch.randn(x.size(0), NLAT, 1, 1).to(device)
       C_loss, EG_loss = wali(x, z, lamb=LAMBDA)
       Recon = ...
@@ -156,6 +177,11 @@ def main():
   plt.legend()
   plt.savefig('cifar10/loss_curve.png')
 
+def test_size(train_loader):
+  for batch_idx, (x, _) in enumerate(train_loader, 1):
+    print("batch_idx: ", batch_idx)
+    print("x: ", x.shape)
+    break
 
 if __name__ == "__main__":
   main()
