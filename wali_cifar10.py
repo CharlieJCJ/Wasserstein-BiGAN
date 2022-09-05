@@ -8,7 +8,7 @@ from torch.nn import Conv2d, BatchNorm2d, LeakyReLU, ReLU, Tanh
 from util import JointCritic, WALI, ResNetSimCLR, ContrastiveLearningDataset
 from torchvision import datasets, transforms, utils
 
-from stylegan2 import Generator, Discriminator
+# from stylegan2 import Generator, Discriminator
 
 
 cudnn.benchmark = True
@@ -18,7 +18,7 @@ torch.cuda.manual_seed_all(1)
 
 # training hyperparameters
 BATCH_SIZE = 64
-ITER = 200000
+ITER = 200000 # Number of epochs to train for
 IMAGE_SIZE = 32
 NUM_CHANNELS = 3
 H_DIM = 512
@@ -68,19 +68,19 @@ def create_WALI():
 def main():
   device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
   print('Device:', device)
-  wali = create_WALI().to(device)
+  # wali = create_WALI().to(device)
 
-  # FIXME - wali.get_encoder_parameters() might be the entire resnet + MLP.
-  optimizerEG = Adam(list(wali.get_encoder_parameters()) + list(wali.get_generator_parameters()), 
-    lr=LEARNING_RATE, betas=(BETA1, BETA2))
-  optimizerC = Adam(wali.get_critic_parameters(), 
-    lr=LEARNING_RATE, betas=(BETA1, BETA2))
+  # # FIXME - wali.get_encoder_parameters() might be the entire resnet + MLP.
+  # optimizerEG = Adam(list(wali.get_encoder_parameters()) + list(wali.get_generator_parameters()), 
+  #   lr=LEARNING_RATE, betas=(BETA1, BETA2))
+  # optimizerC = Adam(wali.get_critic_parameters(), 
+  #   lr=LEARNING_RATE, betas=(BETA1, BETA2))
 
-  # SimCLR Encoder and training scheduler
-  optimizer = torch.optim.Adam(wali.get_encoder_parameters(), 0.0003, weight_decay=1e-4)
+  # # SimCLR Encoder and training scheduler
+  # optimizer = torch.optim.Adam(wali.get_encoder_parameters(), 0.0003, weight_decay=1e-4)
 
-  scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=len(train_loader), eta_min=0,
-                                                           last_epoch=-1)
+  # scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=len(train_loader), eta_min=0,
+  #                                                          last_epoch=-1)
 
   # Load CIFAR10 dataset
   dataset = ContrastiveLearningDataset("./datasets")
@@ -99,9 +99,8 @@ def main():
   # loader = data.DataLoader(svhn, BATCH_SIZE, shuffle=True, num_workers=2)
   noise = torch.randn(64, NLAT, 1, 1, device=device)
   
-  test_size(train_loader)
-  return
-  # FIXME
+  # Debugging purposes :down
+  # test_size(train_loader)
   EG_losses, C_losses = [], []
   curr_iter = C_iter = EG_iter = 0
   C_update, EG_update = True, False
@@ -179,8 +178,12 @@ def main():
 
 def test_size(train_loader):
   for batch_idx, (x, _) in enumerate(train_loader, 1):
+    # x[0] is the first view of the first batch
+    # x[1] is the second view of the first batch
+    # x[2] is the original iamges of the first batch
     print("batch_idx: ", batch_idx)
-    print("x: ", x.shape)
+    print("x: ", x[0], x[1], x[2])
+    print("x: ", x[0].shape, x[1].shape, x[2].shape)
     break
 
 if __name__ == "__main__":
