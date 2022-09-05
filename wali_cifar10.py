@@ -68,7 +68,7 @@ def create_WALI():
 def main():
   device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
   print('Device:', device)
-  # wali = create_WALI().to(device)
+  wali = create_WALI().to(device)
 
   # FIXME - wali.get_encoder_parameters() might be the entire resnet + MLP.
   optimizerEG = Adam(list(wali.get_encoder_parameters()) + list(wali.get_generator_parameters()), 
