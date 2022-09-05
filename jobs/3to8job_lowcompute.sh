@@ -27,4 +27,4 @@
 #
 ## Command(s) to run (example):
 echo "Running on host"
-python /global/scratch/users/charliechengjieji/Wasserstein-BiGAN/wali_cifar.py 
+python /global/scratch/users/charliechengjieji/Wasserstein-BiGAN/wali_cifar10.py 
