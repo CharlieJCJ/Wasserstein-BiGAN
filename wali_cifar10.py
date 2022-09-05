@@ -7,7 +7,8 @@ from torch.utils import data
 from torch.nn import Conv2d, BatchNorm2d, LeakyReLU, ReLU, Tanh
 from util import JointCritic, WALI, ResNetSimCLR, ContrastiveLearningDataset
 from torchvision import datasets, transforms, utils
-
+import torch.nn.functional as F
+from torch.cuda.amp import GradScaler, autocast
 from stylegan2 import Generator, Discriminator
 
 
@@ -17,7 +18,8 @@ torch.cuda.manual_seed_all(1)
 
 
 # training hyperparameters
-BATCH_SIZE = 64
+N_VIEW = 2
+BATCH_SIZE = 256
 ITER = 200000 # Number of epochs to train for
 IMAGE_SIZE = 32
 NUM_CHANNELS = 3
@@ -71,16 +73,13 @@ def main():
   wali = create_WALI().to(device)
 
 
-
-  
-
   # Load CIFAR10 dataset
   dataset = ContrastiveLearningDataset("./datasets")
   # Each have 2 views (2 views + original image)
-  train_dataset = dataset.get_dataset("cifar10", 2)
+  train_dataset = dataset.get_dataset("cifar10", N_VIEW)
 
   train_loader = torch.utils.data.DataLoader(
-      train_dataset, batch_size=256, shuffle=True,
+      train_dataset, batch_size=BATCH_SIZE, shuffle=True,
       num_workers=12, pin_memory=True, drop_last=True)
   
   # FIXME - wali.get_encoder_parameters() might be the entire resnet + MLP.
@@ -93,6 +92,7 @@ def main():
 
   scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=len(train_loader), eta_min=0,
                                                            last_epoch=-1)
+  scaler = GradScaler(enabled=self.args.fp16_precision)
   # Legacy code
   # transform = transforms.Compose([
   #   transforms.ToTensor(),
@@ -107,7 +107,7 @@ def main():
   curr_iter = C_iter = EG_iter = 0
   C_update, EG_update = True, False
   print('Training starts...')
-
+  
   while curr_iter < ITER:
     for batch_idx, (x, _) in enumerate(train_loader, 1):
       print("batch_idx: ", batch_idx)
@@ -188,5 +188,36 @@ def test_size(train_loader):
     print("x: ", x[0].shape, x[1].shape, x[2].shape)
     break
 
+# Calculate simclr loss - in simclr training pipeline
+def info_nce_loss(features, device):
+
+    labels = torch.cat([torch.arange(BATCH_SIZE) for i in range(N_VIEW)], dim=0)
+    labels = (labels.unsqueeze(0) == labels.unsqueeze(1)).float()
+    labels = labels.to(device)
+
+    features = F.normalize(features, dim=1)
+
+    similarity_matrix = torch.matmul(features, features.T)
+    # assert similarity_matrix.shape == (
+    #     self.args.n_views * self.args.batch_size, self.args.n_views * self.args.batch_size)
+    # assert similarity_matrix.shape == labels.shape
+
+    # discard the main diagonal from both: labels and similarities matrix
+    mask = torch.eye(labels.shape[0], dtype=torch.bool).to(device)
+    labels = labels[~mask].view(labels.shape[0], -1)
+    similarity_matrix = similarity_matrix[~mask].view(similarity_matrix.shape[0], -1)
+    # assert similarity_matrix.shape == labels.shape
+
+    # select and combine multiple positives
+    positives = similarity_matrix[labels.bool()].view(labels.shape[0], -1)
+
+    # select only the negatives the negatives
+    negatives = similarity_matrix[~labels.bool()].view(similarity_matrix.shape[0], -1)
+
+    logits = torch.cat([positives, negatives], dim=1)
+    labels = torch.zeros(logits.shape[0], dtype=torch.long).to(device)
+
+    logits = logits / 0.07
+    return logits, labels
 if __name__ == "__main__":
   main()
