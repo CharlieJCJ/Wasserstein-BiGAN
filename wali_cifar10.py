@@ -91,7 +91,7 @@ def main():
   # SimCLR Encoder and training scheduler
   optimizerSimCLR = torch.optim.Adam(wali.get_encoder_parameters(), 0.0003, weight_decay=1e-4)
 
-  schedulerSimCLR = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=len(train_loader), eta_min=0,
+  schedulerSimCLR = torch.optim.lr_scheduler.CosineAnnealingLR(optimizerSimCLR, T_max=len(train_loader), eta_min=0,
                                                            last_epoch=-1)
   scalerSimCLR = GradScaler(enabled=True)
   criterionSimCLR = torch.nn.CrossEntropyLoss().to(device)
