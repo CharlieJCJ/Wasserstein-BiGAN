@@ -88,11 +88,12 @@ def main():
   optimizerC = Adam(wali.get_critic_parameters(), 
     lr=LEARNING_RATE, betas=(BETA1, BETA2))
   # SimCLR Encoder and training scheduler
-  optimizer = torch.optim.Adam(wali.get_encoder_parameters(), 0.0003, weight_decay=1e-4)
+  optimizerSimCLR = torch.optim.Adam(wali.get_encoder_parameters(), 0.0003, weight_decay=1e-4)
 
-  scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=len(train_loader), eta_min=0,
+  schedulerSimCLR = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=len(train_loader), eta_min=0,
                                                            last_epoch=-1)
-  scaler = GradScaler(enabled=self.args.fp16_precision)
+  scalerSimCLR = GradScaler(enabled=True)
+  criterionSimCLR = torch.nn.CrossEntropyLoss().to(device)
   # Legacy code
   # transform = transforms.Compose([
   #   transforms.ToTensor(),
@@ -103,7 +104,7 @@ def main():
   
   # Debugging purposes :down
   # test_size(train_loader)
-  EG_losses, C_losses = [], []
+  EG_losses, C_losses, R_losses = [], [], []
   curr_iter = C_iter = EG_iter = 0
   C_update, EG_update = True, False
   print('Training starts...')
@@ -111,25 +112,46 @@ def main():
   while curr_iter < ITER:
     for batch_idx, (x, _) in enumerate(train_loader, 1):
       print("batch_idx: ", batch_idx)
-      x = x.to(device)
 
+      # Transformed, original image
+      transformed_imgs = torch.cat([x[0], x[1]], dim=0) # expecting 512 * 3 * 32 * 32 (batch size is 256)
+      original_imgs = x[2]
+      transformed_imgs = transformed_imgs.to(device)
+      original_imgs = original_imgs.to(device)
+      with autocast(enabled=True):
+        __, features = wali.encode(transformed_imgs) # only use z
+        logits, labels = info_nce_loss(features, device)
+        loss = criterionSimCLR(logits, labels)
+
+      optimizerSimCLR.zero_grad()
+
+      scalerSimCLR.scale(loss).backward()
+
+      scalerSimCLR.step(optimizerSimCLR)
+      scalerSimCLR.update()
+      
+      ############################
+      # Starting BiGAN procedures
+    
+      # Curr_iter starts from one, and stores to init_x
       if curr_iter == 0:
         init_x = x
         curr_iter += 1
 
       # Sample z from a prior distribution ~ N(0, 1)
       z = torch.randn(x.size(0), NLAT, 1, 1).to(device)
-      C_loss, EG_loss = wali(x, z, lamb=LAMBDA)
-      Recon = ...
-      Recon.backward()
+      C_loss, EG_loss, R_loss= wali(x, z, lamb=LAMBDA)
+      
       # print("batch_idx: ", C_loss, EG_loss)
       if C_update:
         optimizerC.zero_grad()
         C_loss.backward()
         C_losses.append(C_loss.item())
+        # add reconstruction loss backward() here
+        R_loss.backward()
+        R_losses.append(R_loss.item())
         optimizerC.step()
         C_iter += 1
-        # add reconstruction loss backward() here
         if C_iter == C_ITERS:
           C_iter = 0
           C_update, EG_update = False, True
@@ -167,7 +189,9 @@ def main():
       # save model
       if curr_iter % (ITER // 10) == 0:
         torch.save(wali.state_dict(), 'cifar10/models/%d.ckpt' % curr_iter)
-
+    # Outside of batch for loop (for simclr schedule updates)
+    if curr_iter >= 10:
+        schedulerSimCLR.step()
   # plot training loss curve
   plt.figure(figsize=(10, 5))
   plt.title('Training loss curve')
