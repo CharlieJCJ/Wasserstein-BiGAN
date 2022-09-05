@@ -70,17 +70,9 @@ def main():
   print('Device:', device)
   wali = create_WALI().to(device)
 
-  # FIXME - wali.get_encoder_parameters() might be the entire resnet + MLP.
-  optimizerEG = Adam(list(wali.get_encoder_parameters()) + list(wali.get_generator_parameters()), 
-    lr=LEARNING_RATE, betas=(BETA1, BETA2))
-  optimizerC = Adam(wali.get_critic_parameters(), 
-    lr=LEARNING_RATE, betas=(BETA1, BETA2))
 
-  # SimCLR Encoder and training scheduler
-  optimizer = torch.optim.Adam(wali.get_encoder_parameters(), 0.0003, weight_decay=1e-4)
 
-  scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=len(train_loader), eta_min=0,
-                                                           last_epoch=-1)
+  
 
   # Load CIFAR10 dataset
   dataset = ContrastiveLearningDataset("./datasets")
@@ -91,6 +83,16 @@ def main():
       train_dataset, batch_size=256, shuffle=True,
       num_workers=12, pin_memory=True, drop_last=True)
   
+  # FIXME - wali.get_encoder_parameters() might be the entire resnet + MLP.
+  optimizerEG = Adam(list(wali.get_encoder_parameters()) + list(wali.get_generator_parameters()), 
+    lr=LEARNING_RATE, betas=(BETA1, BETA2))
+  optimizerC = Adam(wali.get_critic_parameters(), 
+    lr=LEARNING_RATE, betas=(BETA1, BETA2))
+  # SimCLR Encoder and training scheduler
+  optimizer = torch.optim.Adam(wali.get_encoder_parameters(), 0.0003, weight_decay=1e-4)
+
+  scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=len(train_loader), eta_min=0,
+                                                           last_epoch=-1)
   # Legacy code
   # transform = transforms.Compose([
   #   transforms.ToTensor(),
