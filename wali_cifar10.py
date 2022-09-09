@@ -1,3 +1,4 @@
+# Two optimizer (EG + C) version, instead of three (plus simclr)
 import torch
 import torch.nn as nn
 import torch.backends.cudnn as cudnn
@@ -44,7 +45,6 @@ def create_generator():
 
 def create_critic():
   x_mapping = Discriminator(IMAGE_SIZE)
-  # FIXME -  Question: what is DIM?
   # kernal size is 1, stride is 1, padding is 0. 
   z_mapping = nn.Sequential(
     Conv2d(NLAT, 512, 1, 1, 0), LeakyReLU(LEAK),
@@ -88,6 +88,8 @@ def main():
     lr=LEARNING_RATE, betas=(BETA1, BETA2))
   optimizerC = Adam(wali.get_critic_parameters(), 
     lr=LEARNING_RATE, betas=(BETA1, BETA2))
+
+  # Update: we don't need separate SimCLR Encoder and scheduler? 
   # SimCLR Encoder and training scheduler
   optimizerSimCLR = torch.optim.Adam(wali.get_encoder_parameters(), 0.0003, weight_decay=1e-4)
 
@@ -119,6 +121,7 @@ def main():
       original_imgs = x[2]
       transformed_imgs = transformed_imgs.to(device)
       original_imgs = original_imgs.to(device)
+
       with autocast(enabled=True):
         __, features = wali.encode(transformed_imgs) # only use z
         logits, labels = info_nce_loss(features, device)
@@ -144,6 +147,9 @@ def main():
       C_loss, EG_loss, R_loss= wali(x, z, lamb=LAMBDA)
       
       # print("batch_idx: ", C_loss, EG_loss)
+
+
+      # Update critic: C loss and *Reconstruction loss*
       if C_update:
         optimizerC.zero_grad()
         C_loss.backward()
@@ -157,7 +163,8 @@ def main():
           C_iter = 0
           C_update, EG_update = False, True
         continue
-
+      
+      # Update generator: EG loss (consist of G loss and E loss and *Constrastive loss*)
       if EG_update:
         optimizerEG.zero_grad()
         EG_loss.backward()

@@ -1,3 +1,4 @@
+# Two optimizer (EG + C) version, instead of three (plus simclr)
 import torch
 import torch.nn as nn
 import torch.nn.init as init
@@ -167,6 +168,7 @@ class WALI(nn.Module):
     return grad_penalty
 
   # FIXME: check the variable names. 
+  # Deal with both transformed (two views) and original data (base transformation := normalized + totensor) and calculate loss
   def forward(self, x, z, lamb=10):
     (h_hat, z_hat),  x_tilde = self.encode(x), self.generate(z) # FIXME not self.encode, it has two outputs.
     data_preds, sample_preds = self.criticize(x, z_hat, x_tilde, z)
