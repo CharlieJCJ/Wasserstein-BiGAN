@@ -105,9 +105,9 @@ class JointCritic(nn.Module):
 
   def forward(self, x, z):
     assert x.size(0) == z.size(0)
-    x_out = self.x_net(x)
-    z_out = self.z_net(z)
-    joint_input = torch.cat((x_out, z_out), dim=1)
+    x_out = self.x_net(x) # Discriminator
+    z_out = self.z_net(z) # z mapping
+    joint_input = torch.cat((x_out, z_out), dim=1) # Concatenate
     output = self.joint_net(joint_input)
     return output
 
@@ -166,13 +166,14 @@ class WALI(nn.Module):
     grad_penalty = ((grads.norm(2, dim=1) - 1) ** 2).mean()
     return grad_penalty
 
+  # FIXME: check the variable names. 
   def forward(self, x, z, lamb=10):
-    z_hat, x_tilde = self.encode(x), self.generate(z)
+    (h_hat, z_hat),  x_tilde = self.encode(x), self.generate(z) # FIXME not self.encode, it has two outputs.
     data_preds, sample_preds = self.criticize(x, z_hat, x_tilde, z)
     EG_loss = torch.mean(data_preds - sample_preds)
     C_loss = -EG_loss + lamb * self.calculate_grad_penalty(x.data, z_hat.data, x_tilde.data, z.data)
-    R
-    return C_loss, EG_loss, R
+    Reconstruction_loss = nn.MSELoss(x, self.generate(z_hat))    # Need to check this - z is basically vector h? H_DIM, Z_DIM
+    return C_loss, EG_loss, Reconstruction_loss
 
 ############################################################################################################
 # Merging simclr codebase here
@@ -216,6 +217,7 @@ class ResNetSimCLR(nn.Module):
         h = self.backbone(x)
         z = self.projection(h)
         return h, z
+
 ############################################################################################################
 # Continue merging simclr codebase here (contrastive learning dataset)
 class ContrastiveLearningDataset:

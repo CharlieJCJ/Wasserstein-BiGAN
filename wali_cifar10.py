@@ -83,8 +83,8 @@ def main():
       train_dataset, batch_size=BATCH_SIZE, shuffle=True,
       num_workers=12, pin_memory=True, drop_last=True)
   
-  # FIXME - wali.get_encoder_parameters() might be the entire resnet + MLP.
-  optimizerEG = Adam(list(wali.get_encoder_parameters()) + list(wali.get_generator_parameters()), 
+  # FIXME - wali.get_encoder_parameters() might be the entire resnet + MLP. - FIXED
+  optimizerEG = Adam(list(wali.E.backbone.parameters()) + list(wali.get_generator_parameters()), 
     lr=LEARNING_RATE, betas=(BETA1, BETA2))
   optimizerC = Adam(wali.get_critic_parameters(), 
     lr=LEARNING_RATE, betas=(BETA1, BETA2))
@@ -136,11 +136,11 @@ def main():
     
       # Curr_iter starts from one, and stores to init_x
       if curr_iter == 0:
-        init_x = x
+        init_x = original_imgs
         curr_iter += 1
 
       # Sample z from a prior distribution ~ N(0, 1)
-      z = torch.randn(x.size(0), NLAT, 1, 1).to(device)
+      z = torch.randn(original_imgs.size(0), NLAT, 1, 1).to(device)
       C_loss, EG_loss, R_loss= wali(x, z, lamb=LAMBDA)
       
       # print("batch_idx: ", C_loss, EG_loss)
