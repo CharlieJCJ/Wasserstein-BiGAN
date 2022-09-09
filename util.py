@@ -218,11 +218,13 @@ class WALI(nn.Module):
   # I mean I can do it both by passing into the entire x. 
   # FIXME: check the variable names. 
   # Now: I pass in original images
+  # Edit: x is now 3 dimensional
   def forward(self, x, h, lamb=10):
     # x_tilde is the generated image
+    
     print("x: ", x.shape, "h: ", h.shape)
     print(1)
-    (h_hat, z_hat),  x_tilde = self.encode(x), self.generate(h) # FIXME not self.encode, it has two outputs. 
+    (h_hat, z_hat),  x_tilde = self.encode(x), self.generate([h]) # FIXME not self.encode, it has two outputs. 
                                                                 # We don't need z_hat in this case.
     print(h_hat.shape, z_hat.shape, x_tilde.shape)
     print(2)
@@ -232,7 +234,7 @@ class WALI(nn.Module):
     print(4)
     C_loss = -EG_loss + lamb * self.calculate_grad_penalty(x.data, h_hat.data, x_tilde.data, h.data)
     print(5)
-    Reconstruction_loss = nn.MSELoss()(x, self.generate(h_hat))    # Need to check this - z is basically vector h? H_DIM, Z_DIM
+    Reconstruction_loss = nn.MSELoss()(x, self.generate([h_hat]))    # Need to check this - z is basically vector h? H_DIM, Z_DIM
     print(6)
     return C_loss + Reconstruction_loss, EG_loss, False
 
