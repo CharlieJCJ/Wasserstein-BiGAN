@@ -105,7 +105,7 @@ def main():
   
   # Debugging purposes :down
   # test_size(train_loader)
-  EG_losses, C_losses, R_losses = [], [], []
+  EG_losses, C_losses, R_losses, Constrastive_losses = [], [], [], []
   curr_iter = C_iter = EG_iter = 0
   C_update, EG_update = True, False
   print('Training starts...')
@@ -119,52 +119,61 @@ def main():
       original_imgs = x[2]
       transformed_imgs = transformed_imgs.to(device)
       original_imgs = original_imgs.to(device)
-      with autocast(enabled=True):
-        __, features = wali.encode(transformed_imgs) # only use z
-        logits, labels = info_nce_loss(features, device)
-        loss = criterionSimCLR(logits, labels)
-
-      optimizerSimCLR.zero_grad()
-
-      scalerSimCLR.scale(loss).backward()
-
-      scalerSimCLR.step(optimizerSimCLR)
-      scalerSimCLR.update()
       
       ############################
       # Starting BiGAN procedures
     
       # Curr_iter starts from one, and stores to init_x
       if curr_iter == 0:
-        init_x = original_imgs
+        init_x = original_imgs # init_x is used to plot later (not very important in training)
         curr_iter += 1
-
+      
+      # Forward pass, get loss
       # Sample z from a prior distribution ~ N(0, 1)
       z = torch.randn(original_imgs.size(0), NLAT, 1, 1).to(device)
       C_loss, EG_loss, R_loss= wali(x, z, lamb=LAMBDA)
       
-      # print("batch_idx: ", C_loss, EG_loss)
+      # Get constrastive loss
+      with autocast(enabled=True):
+        # use forward
+        __, features = wali.encode(transformed_imgs) # only use z
+        logits, labels = info_nce_loss(features, device)
+        Constrastive_loss = criterionSimCLR(logits, labels)
+
+      # C_update: C_loss and Reconstruction loss
       if C_update:
         optimizerC.zero_grad()
         C_loss.backward()
         C_losses.append(C_loss.item())
+
         # add reconstruction loss backward() here
         R_loss.backward()
         R_losses.append(R_loss.item())
         optimizerC.step()
+
         C_iter += 1
+        
+        # Switch C to EG update
         if C_iter == C_ITERS:
           C_iter = 0
           C_update, EG_update = False, True
         continue
-
+      
+      # EG_update: EG_loss and SimCLR loss (contrastive loss)
       if EG_update:
         optimizerEG.zero_grad()
         EG_loss.backward()
         EG_losses.append(EG_loss.item())
         optimizerEG.step()
+
+        # SimCLR update (constrastive loss)
+        optimizerSimCLR.zero_grad()
+        scalerSimCLR.scale(Constrastive_loss).backward()
+        scalerSimCLR.step(optimizerSimCLR)
+        Constrastive_losses.append(Constrastive_loss.item())
+        scalerSimCLR.update()
+
         EG_iter += 1
-        # construction loss backward() here
         if EG_iter == EG_ITERS:
           EG_iter = 0
           C_update, EG_update = True, False
@@ -190,9 +199,11 @@ def main():
       # save model
       if curr_iter % (ITER // 10) == 0:
         torch.save(wali.state_dict(), 'cifar10/models/%d.ckpt' % curr_iter)
-    # Outside of batch for loop (for simclr schedule updates)
+    
+    # Outside of batch for loop ( simclr schedule updates)
     if curr_iter >= 10:
         schedulerSimCLR.step()
+
   # plot training loss curve
   plt.figure(figsize=(10, 5))
   plt.title('Training loss curve')
@@ -213,7 +224,7 @@ def test_size(train_loader):
     print("x: ", x[0].shape, x[1].shape, x[2].shape)
     break
 
-# Calculate simclr loss - in simclr training pipeline
+# Calculate SimCLR contrastive loss
 def info_nce_loss(features, device):
 
     labels = torch.cat([torch.arange(BATCH_SIZE) for i in range(N_VIEW)], dim=0)

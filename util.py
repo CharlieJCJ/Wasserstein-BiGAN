@@ -166,6 +166,8 @@ class WALI(nn.Module):
     grad_penalty = ((grads.norm(2, dim=1) - 1) ** 2).mean()
     return grad_penalty
 
+  # Check what x is in this context. It can add another variable that checks for whether it's for simclr or EG/C.
+  # I mean I can do it both by passing into the entire x. 
   # FIXME: check the variable names. 
   def forward(self, x, z, lamb=10):
     (h_hat, z_hat),  x_tilde = self.encode(x), self.generate(z) # FIXME not self.encode, it has two outputs.
