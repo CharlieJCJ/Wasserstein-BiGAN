@@ -690,6 +690,7 @@ class Discriminator(nn.Module):
         out = self.final_conv(out)
 
         out = out.view(batch, -1)
+        out = out.reshape((out.shape[0], out.shape[1], 1, 1))
         # Peter deleted the last layer
         return out
 
@@ -697,5 +698,9 @@ def test():
     net = Discriminator(32)
     y = net(torch.randn(1, 3, 32, 32))
     print(y.size())  # 8192
+    import numpy as np
+    # Our code should follow this syntax as well, credit: 
+    print(nn.MSELoss()(torch.randn(1, 3, 32, 32, requires_grad = True), torch.randn(1, 3, 32, 32)))
 
-test()
+
+# test()

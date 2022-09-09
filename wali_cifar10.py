@@ -50,10 +50,10 @@ def create_critic():
   # FIXME -  Question: what is DIM?
   # kernal size is 1, stride is 1, padding is 0. 
   z_mapping = nn.Sequential(
-    Conv2d(NLAT, 512, 1, 1, 0), LeakyReLU(LEAK),
+    Conv2d(H_DIM, 512, 1, 1, 0), LeakyReLU(LEAK),
     Conv2d(512, 512, 1, 1, 0), LeakyReLU(LEAK))
   
-  # DIM_D = 8192
+  # DIM_D = 8192 - dimension from discriminator
   joint_mapping = nn.Sequential(
     Conv2d(DIM_D + 512, 1024, 1, 1, 0), LeakyReLU(LEAK),
     Conv2d(1024, 1024, 1, 1, 0), LeakyReLU(LEAK),
@@ -65,11 +65,11 @@ def create_critic():
 # Legacy code
 # def create_generator():
 #   mapping = nn.Sequential(
-#     Conv2d(NLAT, DIM * 4, 4, 1, 0, bias=False), BatchNorm2d(DIM * 4), ReLU(inplace=True),
+#     Conv2d(H_DIM, DIM * 4, 4, 1, 0, bias=False), BatchNorm2d(DIM * 4), ReLU(inplace=True),
 #     Conv2d(DIM * 4, DIM * 2, 4, 2, 1, bias=False), BatchNorm2d(DIM * 2), ReLU(inplace=True),
 #     Conv2d(DIM * 2, DIM, 4, 2, 1, bias=False), BatchNorm2d(DIM), ReLU(inplace=True),
 #     Conv2d(DIM, NUM_CHANNELS, 4, 2, 1, bias=False), Tanh())
-#   return DeterministicConditional(mapping)
+#   return DeterministicConditional(mapping, encoder=False)
 
 # def create_critic():
 #   x_mapping = nn.Sequential(
@@ -159,7 +159,8 @@ def main():
       
       # Forward pass, get loss
       # Sample z from a prior distribution ~ N(0, 1)
-      z = torch.randn(original_imgs.size(0), NLAT, 1, 1).to(device)
+      # original_imgs.size(0) = batch size
+      z = torch.randn(original_imgs.size(0), H_DIM, 1, 1).to(device)
       C_loss, EG_loss, R_loss= wali(original_imgs, z, lamb=LAMBDA)
       
       # Get constrastive loss
@@ -177,9 +178,9 @@ def main():
         C_loss.backward()
         C_losses.append(C_loss.item())
 
-        # add reconstruction loss backward() here
-        R_loss.backward()
-        R_losses.append(R_loss.item())
+        # add reconstruction loss backward() here FIXED: I added into C_loss
+        # R_loss.backward(retain_graph=True)
+        # R_losses.append(R_loss.item())
         optimizerC.step()
 
         C_iter += 1
@@ -199,11 +200,12 @@ def main():
         optimizerEG.step()
 
         # SimCLR update (constrastive loss)
-        optimizerSimCLR.zero_grad()
-        scalerSimCLR.scale(Constrastive_loss).backward()
-        scalerSimCLR.step(optimizerSimCLR)
-        Constrastive_losses.append(Constrastive_loss.item())
-        scalerSimCLR.update()
+        # torch.autograd.set_detect_anomaly(True)
+        # optimizerSimCLR.zero_grad()
+        # scalerSimCLR.scale(Constrastive_loss).backward()
+        # scalerSimCLR.step(optimizerSimCLR)
+        # Constrastive_losses.append(Constrastive_loss.item())
+        # scalerSimCLR.update()
 
         EG_iter += 1
         if EG_iter == EG_ITERS:
@@ -258,7 +260,8 @@ def test_size(train_loader):
 
 # Calculate SimCLR contrastive loss
 def info_nce_loss(features, device):
-
+    print("Inside info_nce_loss: feature shape", features.shape)
+    features = features.reshape((features.shape[0], features.shape[1]))
     labels = torch.cat([torch.arange(BATCH_SIZE) for i in range(N_VIEW)], dim=0)
     labels = (labels.unsqueeze(0) == labels.unsqueeze(1)).float()
     labels = labels.to(device)

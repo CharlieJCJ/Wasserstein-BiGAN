@@ -5,9 +5,13 @@ import torch.nn.functional as F
 import torch.autograd as autograd
 from torchvision.transforms import transforms
 from torchvision import transforms, datasets
+from torch.nn import Conv2d, ConvTranspose2d, BatchNorm2d, LeakyReLU, ReLU, Tanh
+
 from resnet import ResNet50
 import numpy as np
-
+H_DIM = 512
+DIM = 128
+NUM_CHANNELS = 3
 def log_odds(p):
   p = torch.clamp(p.mean(dim=0), 1e-7, 1-1e-7)
   return torch.log(p / (1 - p))
@@ -32,7 +36,7 @@ class MaxOut(nn.Module):
 
 # A deterministic conditional mapping. Used as an encoder or a generator.
 class DeterministicConditional(nn.Module):
-  def __init__(self, mapping, shift=None):
+  def __init__(self, mapping, shift=None, encoder = True):
     """ A deterministic conditional mapping. Used as an encoder or a generator.
 
     Args:
@@ -40,9 +44,18 @@ class DeterministicConditional(nn.Module):
       shift: A pixel-wise shift added to the output of mapping. Default: None
     """
     super().__init__()
-
+    self.encoder = encoder
     self.mapping = mapping
     self.shift = shift
+    self.cv1 = ConvTranspose2d(H_DIM, DIM * 4, 4, 1, 0, bias=False)
+    self.cv2 = ConvTranspose2d(DIM * 4, DIM * 2, 4, 2, 1, bias=False)
+    self.cv3 = ConvTranspose2d(DIM * 2, DIM, 4, 2, 1, bias=False)
+    self.cv4 = ConvTranspose2d(DIM, NUM_CHANNELS, 4, 2, 1, bias=False)
+    self.bn1 = BatchNorm2d(DIM * 4)
+    self.bn2 = BatchNorm2d(DIM * 2)
+    self.bn3 = BatchNorm2d(DIM)
+    self.rl = ReLU(inplace=True)
+    self.tanh = Tanh()
 
   def set_shift(self, value):
     if self.shift is None:
@@ -51,9 +64,41 @@ class DeterministicConditional(nn.Module):
     self.shift.data = value
 
   def forward(self, input):
-    output = self.mapping(input)
+    if self.encoder == True: 
+      output = self.mapping(input)
+    else: 
+      # output = self.mapping(input)
+      output = self.cv1(input)
+      print("gen1", output.shape)
+      output = self.bn1(output)
+      print("gen2", output.shape)
+      output = self.rl(output)
+      print("gen3", output.shape)
+      output = self.cv2(output)
+      print("gen4", output.shape)
+      output = self.bn2(output)
+      print("gen5", output.shape)
+      output = self.rl(output)
+      print("gen6", output.shape)
+      output = self.cv3(output)
+      print("gen7", output.shape)
+      output = self.bn3(output)
+      print("gen8", output.shape)
+      output = self.rl(output)
+      print("gen9", output.shape)
+      output = self.cv4(output)
+      print("gen10", output.shape)
+      output = self.tanh(output)
+      print("gen11", output.shape)
+
+    # nn.Sequential(
+    # ConvTranspose2d(NLAT, DIM * 4, 4, 1, 0, bias=False), BatchNorm2d(DIM * 4), ReLU(inplace=True),
+    # ConvTranspose2d(DIM * 4, DIM * 2, 4, 2, 1, bias=False), BatchNorm2d(DIM * 2), ReLU(inplace=True),
+    # ConvTranspose2d(DIM * 2, DIM, 4, 2, 1, bias=False), BatchNorm2d(DIM), ReLU(inplace=True),
+    # ConvTranspose2d(DIM, NUM_CHANNELS, 4, 2, 1, bias=False), Tanh())
     if self.shift is not None:
       output = output + self.shift
+    # print(output.shape)
     return output
 
 
@@ -107,6 +152,8 @@ class JointCritic(nn.Module):
     assert x.size(0) == z.size(0)
     x_out = self.x_net(x) # Discriminator
     z_out = self.z_net(z) # z mapping
+    print("x", x.shape, "z", z.shape)
+    print("x_out", x_out.shape, "z_out", z_out.shape)
     joint_input = torch.cat((x_out, z_out), dim=1) # Concatenate
     output = self.joint_net(joint_input)
     return output
@@ -185,9 +232,9 @@ class WALI(nn.Module):
     print(4)
     C_loss = -EG_loss + lamb * self.calculate_grad_penalty(x.data, h_hat.data, x_tilde.data, h.data)
     print(5)
-    Reconstruction_loss = nn.MSELoss(x, self.generate(h_hat))    # Need to check this - z is basically vector h? H_DIM, Z_DIM
+    Reconstruction_loss = nn.MSELoss()(x, self.generate(h_hat))    # Need to check this - z is basically vector h? H_DIM, Z_DIM
     print(6)
-    return C_loss, EG_loss, Reconstruction_loss
+    return C_loss + Reconstruction_loss, EG_loss, False
 
 ############################################################################################################
 # Merging simclr codebase here
@@ -231,6 +278,8 @@ class ResNetSimCLR(nn.Module):
         h = self.backbone(x)
         z = self.projection(h)
         print("Projection z", z.shape)
+        h = h.reshape((h.shape[0], h.shape[1], 1, 1))
+        z = z.reshape((z.shape[0], z.shape[1], 1, 1))
         return h, z
 
 ############################################################################################################
