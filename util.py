@@ -136,6 +136,7 @@ class WALI(nn.Module):
   def get_critic_parameters(self):
     return self.C.parameters()
 
+  # Returns a tuple, because we changed how encoder outputs
   def encode(self, x):
     return self.E(x)
 
@@ -148,7 +149,7 @@ class WALI(nn.Module):
   def criticize(self, x, z_hat, x_tilde, z):
     input_x = torch.cat((x, x_tilde), dim=0)
     input_z = torch.cat((z_hat, z), dim=0)
-    output = self.C(input_x, input_z)
+    output = self.C(input_x, input_z) # TODO: check output here
     data_preds, sample_preds = output[:x.size(0)], output[x.size(0):]
     return data_preds, sample_preds
 
@@ -169,12 +170,23 @@ class WALI(nn.Module):
   # Check what x is in this context. It can add another variable that checks for whether it's for simclr or EG/C.
   # I mean I can do it both by passing into the entire x. 
   # FIXME: check the variable names. 
-  def forward(self, x, z, lamb=10):
-    (h_hat, z_hat),  x_tilde = self.encode(x), self.generate(z) # FIXME not self.encode, it has two outputs.
-    data_preds, sample_preds = self.criticize(x, z_hat, x_tilde, z)
+  # Now: I pass in original images
+  def forward(self, x, h, lamb=10):
+    # x_tilde is the generated image
+    print("x: ", x.shape, "h: ", h.shape)
+    print(1)
+    (h_hat, z_hat),  x_tilde = self.encode(x), self.generate(h) # FIXME not self.encode, it has two outputs. 
+                                                                # We don't need z_hat in this case.
+    print(h_hat.shape, z_hat.shape, x_tilde.shape)
+    print(2)
+    data_preds, sample_preds = self.criticize(x, h_hat, x_tilde, h) 
+    print(3)
     EG_loss = torch.mean(data_preds - sample_preds)
-    C_loss = -EG_loss + lamb * self.calculate_grad_penalty(x.data, z_hat.data, x_tilde.data, z.data)
-    Reconstruction_loss = nn.MSELoss(x, self.generate(z_hat))    # Need to check this - z is basically vector h? H_DIM, Z_DIM
+    print(4)
+    C_loss = -EG_loss + lamb * self.calculate_grad_penalty(x.data, h_hat.data, x_tilde.data, h.data)
+    print(5)
+    Reconstruction_loss = nn.MSELoss(x, self.generate(h_hat))    # Need to check this - z is basically vector h? H_DIM, Z_DIM
+    print(6)
     return C_loss, EG_loss, Reconstruction_loss
 
 ############################################################################################################
@@ -214,10 +226,11 @@ class ResNetSimCLR(nn.Module):
         self.backbone = ResNet50()
         self.projection = Projection(h_dim, 512,
                                  z_dim, False)
-
+    # We've changed the encoder(.) in WALI class
     def forward(self, x):
         h = self.backbone(x)
         z = self.projection(h)
+        print("Projection z", z.shape)
         return h, z
 
 ############################################################################################################

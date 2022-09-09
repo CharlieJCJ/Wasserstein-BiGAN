@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from torch.optim import Adam
 from torch.utils import data
 from torch.nn import Conv2d, BatchNorm2d, LeakyReLU, ReLU, Tanh
-from util import JointCritic, WALI, ResNetSimCLR, ContrastiveLearningDataset
+from util import JointCritic, WALI, ResNetSimCLR, ContrastiveLearningDataset, DeterministicConditional
 from torchvision import datasets, transforms, utils
 import torch.nn.functional as F
 from torch.cuda.amp import GradScaler, autocast
@@ -19,16 +19,19 @@ torch.cuda.manual_seed_all(1)
 
 # training hyperparameters
 N_VIEW = 2
-BATCH_SIZE = 256
+BATCH_SIZE = 2 # Original = 256, we start with something smaller
 ITER = 200000 # Number of epochs to train for
 IMAGE_SIZE = 32
 NUM_CHANNELS = 3
 H_DIM = 512
 Z_DIM = 128
-DIM_D = 2048 # Need to check the size in stylegan2.py using test()
 NLAT = 512
+DIM_D = 8192 # Need to check the size in stylegan2.py using test()
+
 LEAK = 0.2
 
+# FIXME
+DIM = 128
 C_ITERS = 5       # critic iterations
 EG_ITERS = 1      # encoder / generator iterations
 LAMBDA = 10       # strength of gradient penalty
@@ -50,7 +53,7 @@ def create_critic():
     Conv2d(NLAT, 512, 1, 1, 0), LeakyReLU(LEAK),
     Conv2d(512, 512, 1, 1, 0), LeakyReLU(LEAK))
   
-  # DIM_D = 2048, dimension of the output of the discriminator
+  # DIM_D = 8192
   joint_mapping = nn.Sequential(
     Conv2d(DIM_D + 512, 1024, 1, 1, 0), LeakyReLU(LEAK),
     Conv2d(1024, 1024, 1, 1, 0), LeakyReLU(LEAK),
@@ -59,6 +62,32 @@ def create_critic():
 
   return JointCritic(x_mapping, z_mapping, joint_mapping)
 
+# Legacy code
+# def create_generator():
+#   mapping = nn.Sequential(
+#     Conv2d(NLAT, DIM * 4, 4, 1, 0, bias=False), BatchNorm2d(DIM * 4), ReLU(inplace=True),
+#     Conv2d(DIM * 4, DIM * 2, 4, 2, 1, bias=False), BatchNorm2d(DIM * 2), ReLU(inplace=True),
+#     Conv2d(DIM * 2, DIM, 4, 2, 1, bias=False), BatchNorm2d(DIM), ReLU(inplace=True),
+#     Conv2d(DIM, NUM_CHANNELS, 4, 2, 1, bias=False), Tanh())
+#   return DeterministicConditional(mapping)
+
+# def create_critic():
+#   x_mapping = nn.Sequential(
+#     Conv2d(NUM_CHANNELS, DIM, 4, 2, 1), LeakyReLU(LEAK),
+#     Conv2d(DIM, DIM * 2, 4, 2, 1), LeakyReLU(LEAK),
+#     Conv2d(DIM * 2, DIM * 4, 4, 2, 1), LeakyReLU(LEAK),
+#     Conv2d(DIM * 4, DIM * 4, 4, 1, 0), LeakyReLU(LEAK))
+
+#   z_mapping = nn.Sequential(
+#     Conv2d(NLAT, 512, 1, 1, 0), LeakyReLU(LEAK),
+#     Conv2d(512, 512, 1, 1, 0), LeakyReLU(LEAK))
+
+#   joint_mapping = nn.Sequential(
+#     Conv2d(DIM * 4 + 512, 1024, 1, 1, 0), LeakyReLU(LEAK),
+#     Conv2d(1024, 1024, 1, 1, 0), LeakyReLU(LEAK),
+#     Conv2d(1024, 1, 1, 1, 0))
+
+#   return JointCritic(x_mapping, z_mapping, joint_mapping)
 
 def create_WALI():
   E = ResNetSimCLR(H_DIM, Z_DIM)
@@ -72,7 +101,6 @@ def main():
   device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
   print('Device:', device)
   wali = create_WALI().to(device)
-
 
   # Load CIFAR10 dataset
   dataset = ContrastiveLearningDataset("./datasets")
@@ -119,7 +147,8 @@ def main():
       original_imgs = x[2]
       transformed_imgs = transformed_imgs.to(device)
       original_imgs = original_imgs.to(device)
-      
+      print("data loaded")
+      print(original_imgs.shape)
       ############################
       # Starting BiGAN procedures
     
@@ -131,10 +160,11 @@ def main():
       # Forward pass, get loss
       # Sample z from a prior distribution ~ N(0, 1)
       z = torch.randn(original_imgs.size(0), NLAT, 1, 1).to(device)
-      C_loss, EG_loss, R_loss= wali(x, z, lamb=LAMBDA)
+      C_loss, EG_loss, R_loss= wali(original_imgs, z, lamb=LAMBDA)
       
       # Get constrastive loss
       with autocast(enabled=True):
+        print("get constrastive loss")
         # use forward
         __, features = wali.encode(transformed_imgs) # only use z
         logits, labels = info_nce_loss(features, device)
@@ -142,6 +172,7 @@ def main():
 
       # C_update: C_loss and Reconstruction loss
       if C_update:
+        print("C_update")
         optimizerC.zero_grad()
         C_loss.backward()
         C_losses.append(C_loss.item())
@@ -158,9 +189,10 @@ def main():
           C_iter = 0
           C_update, EG_update = False, True
         continue
-      
+
       # EG_update: EG_loss and SimCLR loss (contrastive loss)
       if EG_update:
+        print("EG_update")
         optimizerEG.zero_grad()
         EG_loss.backward()
         EG_losses.append(EG_loss.item())
@@ -203,16 +235,16 @@ def main():
     # Outside of batch for loop ( simclr schedule updates)
     if curr_iter >= 10:
         schedulerSimCLR.step()
-
-  # plot training loss curve
-  plt.figure(figsize=(10, 5))
-  plt.title('Training loss curve')
-  plt.plot(EG_losses, label='Encoder + Generator')
-  plt.plot(C_losses, label='Critic')
-  plt.xlabel('Iterations')
-  plt.ylabel('Loss')
-  plt.legend()
-  plt.savefig('cifar10/loss_curve.png')
+  print("End of training")
+  # # plot training loss curve
+  # plt.figure(figsize=(10, 5))
+  # plt.title('Training loss curve')
+  # plt.plot(EG_losses, label='Encoder + Generator')
+  # plt.plot(C_losses, label='Critic')
+  # plt.xlabel('Iterations')
+  # plt.ylabel('Loss')
+  # plt.legend()
+  # plt.savefig('cifar10/loss_curve.png')
 
 def test_size(train_loader):
   for batch_idx, (x, _) in enumerate(train_loader, 1):

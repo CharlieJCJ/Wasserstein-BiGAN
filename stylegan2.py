@@ -690,12 +690,12 @@ class Discriminator(nn.Module):
         out = self.final_conv(out)
 
         out = out.view(batch, -1)
-
+        # Peter deleted the last layer
         return out
 
 def test():
     net = Discriminator(32)
     y = net(torch.randn(1, 3, 32, 32))
-    print(y.size())
+    print(y.size())  # 8192
 
 test()
