@@ -6,12 +6,14 @@ import torch.autograd as autograd
 from torchvision.transforms import transforms
 from torchvision import transforms, datasets
 from torch.nn import Conv2d, ConvTranspose2d, BatchNorm2d, LeakyReLU, ReLU, Tanh
-
+from torch.cuda.amp import GradScaler, autocast
 from resnet import ResNet50
 import numpy as np
 H_DIM = 512
 DIM = 128
 NUM_CHANNELS = 3
+N_VIEW = 2
+BATCH_SIZE = 2 # Original = 256, we start with something smaller
 def log_odds(p):
   p = torch.clamp(p.mean(dim=0), 1e-7, 1-1e-7)
   return torch.log(p / (1 - p))
@@ -219,25 +221,67 @@ class WALI(nn.Module):
   # FIXME: check the variable names. 
   # Now: I pass in original images
   # Edit: x is now 3 dimensional
-  def forward(self, x, h, lamb=10):
+  def forward(self, x, h, lamb=10, device="cuda"):
     # x_tilde is the generated image
-    
-    print("x: ", x.shape, "h: ", h.shape)
+    transformed_imgs = torch.cat([x[0], x[1]], dim=0) # expecting 512 * 3 * 32 * 32 (batch size is 256)
+    original_imgs = x[2]
+    transformed_imgs = transformed_imgs.to(device)
+    original_imgs = original_imgs.to(device)
+
+
+    print("x: ", original_imgs.shape, "h: ", h.shape)
     print(1)
-    (h_hat, z_hat),  x_tilde = self.encode(x), self.generate([h]) # FIXME not self.encode, it has two outputs. 
+    (h_hat, z_hat),  x_tilde = self.encode(original_imgs), self.generate([h]) # FIXME not self.encode, it has two outputs. 
                                                                 # We don't need z_hat in this case.
     print(h_hat.shape, z_hat.shape, x_tilde.shape)
+    criterionSimCLR = torch.nn.CrossEntropyLoss().to(device)
+    with autocast(enabled=True):
+        print("get constrastive loss")
+        # use forward
+        __, features = self.encode(transformed_imgs) # only use z
+        logits, labels = info_nce_loss(features, device)
+        Constrastive_loss = criterionSimCLR(logits, labels)
     print(2)
-    data_preds, sample_preds = self.criticize(x, h_hat, x_tilde, h) 
+    data_preds, sample_preds = self.criticize(original_imgs, h_hat, x_tilde, h) 
     print(3)
     EG_loss = torch.mean(data_preds - sample_preds)
     print(4)
-    C_loss = -EG_loss + lamb * self.calculate_grad_penalty(x.data, h_hat.data, x_tilde.data, h.data)
+    C_loss = -EG_loss + lamb * self.calculate_grad_penalty(original_imgs.data, h_hat.data, x_tilde.data, h.data)
     print(5)
-    Reconstruction_loss = nn.MSELoss()(x, self.generate([h_hat]))    # Need to check this - z is basically vector h? H_DIM, Z_DIM
+    Reconstruction_loss = nn.MSELoss()(original_imgs, self.generate([h_hat]))    # Need to check this - z is basically vector h? H_DIM, Z_DIM
     print(6)
-    return C_loss + Reconstruction_loss, EG_loss, False
+    return C_loss + Reconstruction_loss, EG_loss + Constrastive_loss
+def info_nce_loss(features, device):
+    print("Inside info_nce_loss: feature shape", features.shape)
+    features = features.reshape((features.shape[0], features.shape[1]))
+    labels = torch.cat([torch.arange(BATCH_SIZE) for i in range(N_VIEW)], dim=0)
+    labels = (labels.unsqueeze(0) == labels.unsqueeze(1)).float()
+    labels = labels.to(device)
 
+    features = F.normalize(features, dim=1)
+
+    similarity_matrix = torch.matmul(features, features.T)
+    # assert similarity_matrix.shape == (
+    #     self.args.n_views * self.args.batch_size, self.args.n_views * self.args.batch_size)
+    # assert similarity_matrix.shape == labels.shape
+
+    # discard the main diagonal from both: labels and similarities matrix
+    mask = torch.eye(labels.shape[0], dtype=torch.bool).to(device)
+    labels = labels[~mask].view(labels.shape[0], -1)
+    similarity_matrix = similarity_matrix[~mask].view(similarity_matrix.shape[0], -1)
+    # assert similarity_matrix.shape == labels.shape
+
+    # select and combine multiple positives
+    positives = similarity_matrix[labels.bool()].view(labels.shape[0], -1)
+
+    # select only the negatives the negatives
+    negatives = similarity_matrix[~labels.bool()].view(similarity_matrix.shape[0], -1)
+
+    logits = torch.cat([positives, negatives], dim=1)
+    labels = torch.zeros(logits.shape[0], dtype=torch.long).to(device)
+
+    logits = logits / 0.07
+    return logits, labels
 ############################################################################################################
 # Merging simclr codebase here
 class Projection(nn.Module):

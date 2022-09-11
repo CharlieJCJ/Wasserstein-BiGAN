@@ -112,7 +112,7 @@ def main():
       num_workers=12, pin_memory=True, drop_last=True)
   
   # FIXME - wali.get_encoder_parameters() might be the entire resnet + MLP. - FIXED
-  optimizerEG = Adam(list(wali.E.backbone.parameters()) + list(wali.get_generator_parameters()), 
+  optimizerEG = Adam(list(wali.get_encoder_parameters()) + list(wali.get_generator_parameters()), 
     lr=LEARNING_RATE, betas=(BETA1, BETA2))
   optimizerC = Adam(wali.get_critic_parameters(), 
     lr=LEARNING_RATE, betas=(BETA1, BETA2))
@@ -160,8 +160,10 @@ def main():
       # Forward pass, get loss
       # Sample z from a prior distribution ~ N(0, 1)
       # original_imgs.size(0) = batch size
-      z = torch.randn(original_imgs.size(0), H_DIM, 1, 1).to(device)
-      C_loss, EG_loss, R_loss= wali(original_imgs, z, lamb=LAMBDA)
+      # x[2] is the original image TODO
+      z = torch.randn(x[2].size(0), H_DIM, 1, 1).to(device)
+      C_loss, EG_loss = wali(x, z, lamb=LAMBDA, device=device)
+      # C_loss, EG_loss, R_loss= wali(original_imgs, z, lamb=LAMBDA)
       
       # Get constrastive loss
       with autocast(enabled=True):
