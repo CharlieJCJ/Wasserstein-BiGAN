@@ -19,7 +19,7 @@ torch.cuda.manual_seed_all(1)
 
 # training hyperparameters
 N_VIEW = 2
-BATCH_SIZE = 2 # Original = 256, we start with something smaller
+BATCH_SIZE = 4 # Original = 256, we start with something smaller
 ITER = 200000 # Number of epochs to train for
 IMAGE_SIZE = 32
 NUM_CHANNELS = 3
@@ -148,7 +148,7 @@ def main():
       transformed_imgs = transformed_imgs.to(device)
       original_imgs = original_imgs.to(device)
       print("data loaded")
-      print(original_imgs.shape)
+      # print(original_imgs.shape)
       ############################
       # Starting BiGAN procedures
     
@@ -163,22 +163,14 @@ def main():
       # x[2] is the original image TODO
       z = torch.randn(x[2].size(0), H_DIM, 1, 1).to(device)
       C_loss, EG_loss = wali(x, z, lamb=LAMBDA, device=device)
-      # C_loss, EG_loss, R_loss= wali(original_imgs, z, lamb=LAMBDA)
-      
-      # Get constrastive loss
-      with autocast(enabled=True):
-        print("get constrastive loss")
-        # use forward
-        __, features = wali.encode(transformed_imgs) # only use z
-        logits, labels = info_nce_loss(features, device)
-        Constrastive_loss = criterionSimCLR(logits, labels)
+      print("loss calculated C_loss: ", C_loss, "EG_loss: ",  EG_loss)
 
       # C_update: C_loss and Reconstruction loss
       if C_update:
         print("C_update")
         optimizerC.zero_grad()
         C_loss.backward()
-        C_losses.append(C_loss.item())
+        # C_losses.append(C_loss.item())
 
         # add reconstruction loss backward() here FIXED: I added into C_loss
         # R_loss.backward(retain_graph=True)
@@ -193,22 +185,13 @@ def main():
           C_update, EG_update = False, True
         continue
 
-      # EG_update: EG_loss and SimCLR loss (contrastive loss)
+      # EG_update: EG_loss and SimCLR loss (contrastive loss), EG loss contains SimCLR loss already in forward pass 
       if EG_update:
         print("EG_update")
         optimizerEG.zero_grad()
         EG_loss.backward()
-        EG_losses.append(EG_loss.item())
+        # EG_losses.append(EG_loss.item())
         optimizerEG.step()
-
-        # SimCLR update (constrastive loss)
-        # torch.autograd.set_detect_anomaly(True)
-        # optimizerSimCLR.zero_grad()
-        # scalerSimCLR.scale(Constrastive_loss).backward()
-        # scalerSimCLR.step(optimizerSimCLR)
-        # Constrastive_losses.append(Constrastive_loss.item())
-        # scalerSimCLR.update()
-
         EG_iter += 1
         if EG_iter == EG_ITERS:
           EG_iter = 0
@@ -217,28 +200,28 @@ def main():
         else:
           continue
 
-      # print training statistics
-      if curr_iter % 100 == 0:
-        print('[%d/%d]\tW-distance: %.4f\tC-loss: %.4f'
-          % (curr_iter, ITER, EG_loss.item(), C_loss.item()))
+      # # print training statistics
+      # if curr_iter % 100 == 0:
+      #   print('[%d/%d]\tW-distance: %.4f\tC-loss: %.4f'
+      #     % (curr_iter, ITER, EG_loss.item(), C_loss.item()))
 
-        # plot reconstructed images and samples
-        wali.eval()
-        real_x, rect_x = init_x[:32], wali.reconstruct(init_x[:32]).detach_()
-        rect_imgs = torch.cat((real_x.unsqueeze(1), rect_x.unsqueeze(1)), dim=1) 
-        rect_imgs = rect_imgs.view(64, NUM_CHANNELS, IMAGE_SIZE, IMAGE_SIZE).cpu()
-        genr_imgs = wali.generate(noise).detach_().cpu()
-        utils.save_image(rect_imgs * 0.5 + 0.5, 'cifar10/rect%d.png' % curr_iter)
-        utils.save_image(genr_imgs * 0.5 + 0.5, 'cifar10/genr%d.png' % curr_iter)
-        wali.train()
+      #   # plot reconstructed images and samples
+      #   wali.eval()
+      #   real_x, rect_x = init_x[:32], wali.reconstruct(init_x[:32]).detach_()
+      #   rect_imgs = torch.cat((real_x.unsqueeze(1), rect_x.unsqueeze(1)), dim=1) 
+      #   rect_imgs = rect_imgs.view(64, NUM_CHANNELS, IMAGE_SIZE, IMAGE_SIZE).cpu()
+      #   genr_imgs = wali.generate(noise).detach_().cpu()
+      #   utils.save_image(rect_imgs * 0.5 + 0.5, 'cifar10/rect%d.png' % curr_iter)
+      #   utils.save_image(genr_imgs * 0.5 + 0.5, 'cifar10/genr%d.png' % curr_iter)
+      #   wali.train()
 
       # save model
       if curr_iter % (ITER // 10) == 0:
         torch.save(wali.state_dict(), 'cifar10/models/%d.ckpt' % curr_iter)
     
     # Outside of batch for loop ( simclr schedule updates)
-    if curr_iter >= 10:
-        schedulerSimCLR.step()
+    # if curr_iter >= 10:
+    #     schedulerSimCLR.step()
   print("End of training")
   # # plot training loss curve
   # plt.figure(figsize=(10, 5))

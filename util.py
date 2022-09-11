@@ -13,7 +13,7 @@ H_DIM = 512
 DIM = 128
 NUM_CHANNELS = 3
 N_VIEW = 2
-BATCH_SIZE = 2 # Original = 256, we start with something smaller
+BATCH_SIZE = 4 # Original = 256, we start with something smaller
 def log_odds(p):
   p = torch.clamp(p.mean(dim=0), 1e-7, 1-1e-7)
   return torch.log(p / (1 - p))
@@ -71,27 +71,27 @@ class DeterministicConditional(nn.Module):
     else: 
       # output = self.mapping(input)
       output = self.cv1(input)
-      print("gen1", output.shape)
+      # print("gen1", output.shape)
       output = self.bn1(output)
-      print("gen2", output.shape)
+      # print("gen2", output.shape)
       output = self.rl(output)
-      print("gen3", output.shape)
+      # print("gen3", output.shape)
       output = self.cv2(output)
-      print("gen4", output.shape)
+      # print("gen4", output.shape)
       output = self.bn2(output)
-      print("gen5", output.shape)
+      # print("gen5", output.shape)
       output = self.rl(output)
-      print("gen6", output.shape)
+      # print("gen6", output.shape)
       output = self.cv3(output)
-      print("gen7", output.shape)
+      # print("gen7", output.shape)
       output = self.bn3(output)
-      print("gen8", output.shape)
+      # print("gen8", output.shape)
       output = self.rl(output)
-      print("gen9", output.shape)
+      # print("gen9", output.shape)
       output = self.cv4(output)
-      print("gen10", output.shape)
+      # print("gen10", output.shape)
       output = self.tanh(output)
-      print("gen11", output.shape)
+      # print("gen11", output.shape)
 
     # nn.Sequential(
     # ConvTranspose2d(NLAT, DIM * 4, 4, 1, 0, bias=False), BatchNorm2d(DIM * 4), ReLU(inplace=True),
@@ -154,8 +154,8 @@ class JointCritic(nn.Module):
     assert x.size(0) == z.size(0)
     x_out = self.x_net(x) # Discriminator
     z_out = self.z_net(z) # z mapping
-    print("x", x.shape, "z", z.shape)
-    print("x_out", x_out.shape, "z_out", z_out.shape)
+    # print("x", x.shape, "z", z.shape)
+    # print("x_out", x_out.shape, "z_out", z_out.shape)
     joint_input = torch.cat((x_out, z_out), dim=1) # Concatenate
     output = self.joint_net(joint_input)
     return output
@@ -229,30 +229,30 @@ class WALI(nn.Module):
     original_imgs = original_imgs.to(device)
 
 
-    print("x: ", original_imgs.shape, "h: ", h.shape)
-    print(1)
+    # print("x: ", original_imgs.shape, "h: ", h.shape)
+    # print(1)
     (h_hat, z_hat),  x_tilde = self.encode(original_imgs), self.generate([h]) # FIXME not self.encode, it has two outputs. 
                                                                 # We don't need z_hat in this case.
-    print(h_hat.shape, z_hat.shape, x_tilde.shape)
+    # print(h_hat.shape, z_hat.shape, x_tilde.shape)
     criterionSimCLR = torch.nn.CrossEntropyLoss().to(device)
     with autocast(enabled=True):
-        print("get constrastive loss")
+        # print("get constrastive loss")
         # use forward
         __, features = self.encode(transformed_imgs) # only use z
         logits, labels = info_nce_loss(features, device)
         Constrastive_loss = criterionSimCLR(logits, labels)
-    print(2)
+    # print(2)
     data_preds, sample_preds = self.criticize(original_imgs, h_hat, x_tilde, h) 
-    print(3)
+    # print(3)
     EG_loss = torch.mean(data_preds - sample_preds)
-    print(4)
+    # print(4)
     C_loss = -EG_loss + lamb * self.calculate_grad_penalty(original_imgs.data, h_hat.data, x_tilde.data, h.data)
-    print(5)
+    # print(5)
     Reconstruction_loss = nn.MSELoss()(original_imgs, self.generate([h_hat]))    # Need to check this - z is basically vector h? H_DIM, Z_DIM
-    print(6)
+    # print(6)
     return C_loss + Reconstruction_loss, EG_loss + Constrastive_loss
 def info_nce_loss(features, device):
-    print("Inside info_nce_loss: feature shape", features.shape)
+    # print("Inside info_nce_loss: feature shape", features.shape)
     features = features.reshape((features.shape[0], features.shape[1]))
     labels = torch.cat([torch.arange(BATCH_SIZE) for i in range(N_VIEW)], dim=0)
     labels = (labels.unsqueeze(0) == labels.unsqueeze(1)).float()
@@ -323,7 +323,7 @@ class ResNetSimCLR(nn.Module):
     def forward(self, x):
         h = self.backbone(x)
         z = self.projection(h)
-        print("Projection z", z.shape)
+        # print("Projection z", z.shape)
         h = h.reshape((h.shape[0], h.shape[1], 1, 1))
         z = z.reshape((z.shape[0], z.shape[1], 1, 1))
         return h, z
