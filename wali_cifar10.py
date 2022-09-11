@@ -62,32 +62,6 @@ def create_critic():
 
   return JointCritic(x_mapping, z_mapping, joint_mapping)
 
-# Legacy code
-# def create_generator():
-#   mapping = nn.Sequential(
-#     Conv2d(H_DIM, DIM * 4, 4, 1, 0, bias=False), BatchNorm2d(DIM * 4), ReLU(inplace=True),
-#     Conv2d(DIM * 4, DIM * 2, 4, 2, 1, bias=False), BatchNorm2d(DIM * 2), ReLU(inplace=True),
-#     Conv2d(DIM * 2, DIM, 4, 2, 1, bias=False), BatchNorm2d(DIM), ReLU(inplace=True),
-#     Conv2d(DIM, NUM_CHANNELS, 4, 2, 1, bias=False), Tanh())
-#   return DeterministicConditional(mapping, encoder=False)
-
-# def create_critic():
-#   x_mapping = nn.Sequential(
-#     Conv2d(NUM_CHANNELS, DIM, 4, 2, 1), LeakyReLU(LEAK),
-#     Conv2d(DIM, DIM * 2, 4, 2, 1), LeakyReLU(LEAK),
-#     Conv2d(DIM * 2, DIM * 4, 4, 2, 1), LeakyReLU(LEAK),
-#     Conv2d(DIM * 4, DIM * 4, 4, 1, 0), LeakyReLU(LEAK))
-
-#   z_mapping = nn.Sequential(
-#     Conv2d(NLAT, 512, 1, 1, 0), LeakyReLU(LEAK),
-#     Conv2d(512, 512, 1, 1, 0), LeakyReLU(LEAK))
-
-#   joint_mapping = nn.Sequential(
-#     Conv2d(DIM * 4 + 512, 1024, 1, 1, 0), LeakyReLU(LEAK),
-#     Conv2d(1024, 1024, 1, 1, 0), LeakyReLU(LEAK),
-#     Conv2d(1024, 1, 1, 1, 0))
-
-#   return JointCritic(x_mapping, z_mapping, joint_mapping)
 
 def create_WALI():
   E = ResNetSimCLR(H_DIM, Z_DIM)
@@ -123,12 +97,6 @@ def main():
                                                            last_epoch=-1)
   scalerSimCLR = GradScaler(enabled=True)
   criterionSimCLR = torch.nn.CrossEntropyLoss().to(device)
-  # Legacy code
-  # transform = transforms.Compose([
-  #   transforms.ToTensor(),
-  #   transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
-  # svhn = datasets.CIFAR10(CIFAR_PATH, download=True, train=True, transform=transform)
-  # loader = data.DataLoader(svhn, BATCH_SIZE, shuffle=True, num_workers=2)
   noise = torch.randn(64, NLAT, 1, 1, device=device)
   
   # Debugging purposes :down
@@ -171,10 +139,6 @@ def main():
         optimizerC.zero_grad()
         C_loss.backward()
         # C_losses.append(C_loss.item())
-
-        # add reconstruction loss backward() here FIXED: I added into C_loss
-        # R_loss.backward(retain_graph=True)
-        # R_losses.append(R_loss.item())
         optimizerC.step()
 
         C_iter += 1
@@ -243,37 +207,6 @@ def test_size(train_loader):
     print("x: ", x[0].shape, x[1].shape, x[2].shape)
     break
 
-# Calculate SimCLR contrastive loss
-def info_nce_loss(features, device):
-    print("Inside info_nce_loss: feature shape", features.shape)
-    features = features.reshape((features.shape[0], features.shape[1]))
-    labels = torch.cat([torch.arange(BATCH_SIZE) for i in range(N_VIEW)], dim=0)
-    labels = (labels.unsqueeze(0) == labels.unsqueeze(1)).float()
-    labels = labels.to(device)
 
-    features = F.normalize(features, dim=1)
-
-    similarity_matrix = torch.matmul(features, features.T)
-    # assert similarity_matrix.shape == (
-    #     self.args.n_views * self.args.batch_size, self.args.n_views * self.args.batch_size)
-    # assert similarity_matrix.shape == labels.shape
-
-    # discard the main diagonal from both: labels and similarities matrix
-    mask = torch.eye(labels.shape[0], dtype=torch.bool).to(device)
-    labels = labels[~mask].view(labels.shape[0], -1)
-    similarity_matrix = similarity_matrix[~mask].view(similarity_matrix.shape[0], -1)
-    # assert similarity_matrix.shape == labels.shape
-
-    # select and combine multiple positives
-    positives = similarity_matrix[labels.bool()].view(labels.shape[0], -1)
-
-    # select only the negatives the negatives
-    negatives = similarity_matrix[~labels.bool()].view(similarity_matrix.shape[0], -1)
-
-    logits = torch.cat([positives, negatives], dim=1)
-    labels = torch.zeros(logits.shape[0], dtype=torch.long).to(device)
-
-    logits = logits / 0.07
-    return logits, labels
 if __name__ == "__main__":
   main()

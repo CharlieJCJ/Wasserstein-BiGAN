@@ -69,29 +69,17 @@ class DeterministicConditional(nn.Module):
     if self.encoder == True: 
       output = self.mapping(input)
     else: 
-      # output = self.mapping(input)
       output = self.cv1(input)
-      # print("gen1", output.shape)
       output = self.bn1(output)
-      # print("gen2", output.shape)
       output = self.rl(output)
-      # print("gen3", output.shape)
       output = self.cv2(output)
-      # print("gen4", output.shape)
       output = self.bn2(output)
-      # print("gen5", output.shape)
       output = self.rl(output)
-      # print("gen6", output.shape)
       output = self.cv3(output)
-      # print("gen7", output.shape)
       output = self.bn3(output)
-      # print("gen8", output.shape)
       output = self.rl(output)
-      # print("gen9", output.shape)
       output = self.cv4(output)
-      # print("gen10", output.shape)
       output = self.tanh(output)
-      # print("gen11", output.shape)
 
     # nn.Sequential(
     # ConvTranspose2d(NLAT, DIM * 4, 4, 1, 0, bias=False), BatchNorm2d(DIM * 4), ReLU(inplace=True),
@@ -230,7 +218,6 @@ class WALI(nn.Module):
 
 
     # print("x: ", original_imgs.shape, "h: ", h.shape)
-    # print(1)
     (h_hat, z_hat),  x_tilde = self.encode(original_imgs), self.generate([h]) # FIXME not self.encode, it has two outputs. 
                                                                 # We don't need z_hat in this case.
     # print(h_hat.shape, z_hat.shape, x_tilde.shape)
@@ -241,18 +228,12 @@ class WALI(nn.Module):
         __, features = self.encode(transformed_imgs) # only use z
         logits, labels = info_nce_loss(features, device)
         Constrastive_loss = criterionSimCLR(logits, labels)
-    # print(2)
     data_preds, sample_preds = self.criticize(original_imgs, h_hat, x_tilde, h) 
-    # print(3)
     EG_loss = torch.mean(data_preds - sample_preds)
-    # print(4)
     C_loss = -EG_loss + lamb * self.calculate_grad_penalty(original_imgs.data, h_hat.data, x_tilde.data, h.data)
-    # print(5)
     Reconstruction_loss = nn.MSELoss()(original_imgs, self.generate([h_hat]))    # Need to check this - z is basically vector h? H_DIM, Z_DIM
-    # print(6)
     return C_loss + Reconstruction_loss, EG_loss + Constrastive_loss
 def info_nce_loss(features, device):
-    # print("Inside info_nce_loss: feature shape", features.shape)
     features = features.reshape((features.shape[0], features.shape[1]))
     labels = torch.cat([torch.arange(BATCH_SIZE) for i in range(N_VIEW)], dim=0)
     labels = (labels.unsqueeze(0) == labels.unsqueeze(1)).float()
