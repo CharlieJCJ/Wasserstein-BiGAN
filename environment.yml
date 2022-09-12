@@ -1,4 +1,4 @@
-name: bigan
+name: clusterGAN
 channels:
   - pytorch
   - defaults
