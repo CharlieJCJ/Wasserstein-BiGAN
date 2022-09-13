@@ -13,7 +13,7 @@ H_DIM = 512
 DIM = 128
 NUM_CHANNELS = 3
 N_VIEW = 2
-BATCH_SIZE = 4 # Original = 256, we start with something smaller
+BATCH_SIZE = 64 # Original = 256, we start with something smaller
 def log_odds(p):
   p = torch.clamp(p.mean(dim=0), 1e-7, 1-1e-7)
   return torch.log(p / (1 - p))
