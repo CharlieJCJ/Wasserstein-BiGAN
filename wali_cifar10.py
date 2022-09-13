@@ -129,9 +129,9 @@ def main():
       # Starting BiGAN procedures
     
       # Curr_iter starts from one, and stores to init_x
-      if curr_iter == 0:
-        init_x = original_imgs # init_x is used to plot later (not very important in training)
-        curr_iter += 1
+      # if curr_iter == 0:
+      #   init_x = original_imgs # init_x is used to plot later (not very important in training)
+      #   curr_iter += 1
       
       # Forward pass, get loss
       # Sample z from a prior distribution ~ N(0, 1)
@@ -147,7 +147,7 @@ def main():
           curr_iter, batch_idx, C_loss.item(), EG_loss.item()))
         # writer.add_scalar('C_loss', running_losses[0], (curr_iter - 1) * n_total_runs + batch_idx)
         # writer.add_scalar('EG_loss', running_losses[1], (curr_iter - 1) * n_total_runs + batch_idx)
-        logging.info('C_loss: ' + str(running_losses[0]) + 'EG_loss: '+ str(running_losses[1]) + " epoch: " + str(curr_iter - 1) + " batch"+ str((curr_iter - 1) * n_total_runs + batch_idx))
+        logging.info('C_loss: ' + str(running_losses[0]) + 'EG_loss: '+ str(running_losses[1]) + " epoch: " + str(curr_iter) + " batch"+ str((curr_iter) * n_total_runs + batch_idx))
       # C_update: C_loss and Reconstruction loss
       if C_update:
         print("C_update")
@@ -196,8 +196,8 @@ def main():
       #   wali.train()
 
       # save model
-      if curr_iter % 10 == 0:
-        torch.save(wali.state_dict(), 'cifar10/models/%d.ckpt' % curr_iter)
+    if curr_iter % 10 == 0:
+      torch.save(wali.state_dict(), 'cifar10/models/{curr_iter}-{batch_idx}.ckpt')
     
     # Outside of batch for loop ( simclr schedule updates)
     # if curr_iter >= 10:
