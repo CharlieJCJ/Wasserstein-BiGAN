@@ -147,7 +147,7 @@ def main():
           curr_iter, batch_idx, C_loss.item(), EG_loss.item()))
         # writer.add_scalar('C_loss', running_losses[0], (curr_iter - 1) * n_total_runs + batch_idx)
         # writer.add_scalar('EG_loss', running_losses[1], (curr_iter - 1) * n_total_runs + batch_idx)
-        logging.info('C_loss: ' + (running_losses[0]) + 'EG_loss: '+ (running_losses[1]) + " epoch: " + (curr_iter - 1) + " batch"+ ((curr_iter - 1) * n_total_runs + batch_idx))
+        logging.info('C_loss: ' + str(running_losses[0]) + 'EG_loss: '+ str(running_losses[1]) + " epoch: " + str(curr_iter - 1) + " batch"+ str((curr_iter - 1) * n_total_runs + batch_idx))
       # C_update: C_loss and Reconstruction loss
       if C_update:
         print("C_update")
