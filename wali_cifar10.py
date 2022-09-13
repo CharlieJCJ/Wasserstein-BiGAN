@@ -113,7 +113,7 @@ def main():
   C_update, EG_update = True, False
   print('Training starts...')
   
-  while curr_iter < ITER:
+  for curr_iter in range(ITER):
     for batch_idx, (x, _) in enumerate(train_loader, 1):
       running_losses = [0, 0]
       print("batch_idx: ", batch_idx)
@@ -198,7 +198,7 @@ def main():
       # save model
       if curr_iter % 10 == 0:
         torch.save(wali.state_dict(), 'cifar10/models/%d.ckpt' % curr_iter)
-    curr_iter += 1
+    
     # Outside of batch for loop ( simclr schedule updates)
     # if curr_iter >= 10:
     #     schedulerSimCLR.step()
