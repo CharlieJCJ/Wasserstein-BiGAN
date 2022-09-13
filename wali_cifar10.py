@@ -75,7 +75,7 @@ def create_WALI():
 
 # Training pipeline function
 def main():
-  logging.basicConfig(filename='run3.log', level=logging.DEBUG)
+  logging.basicConfig(filename='run4.log', level=logging.DEBUG)
   logging.info('Start training')
   writer = SummaryWriter("runs/cifar10")
 
