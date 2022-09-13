@@ -11,8 +11,8 @@ import torch.nn.functional as F
 from torch.cuda.amp import GradScaler, autocast
 from stylegan2 import Generator, Discriminator
 from torch.utils.tensorboard import SummaryWriter
+import logging
 
-writer = SummaryWriter("runs/cifar10")
 WRITER_ITER = 10
 cudnn.benchmark = True
 torch.manual_seed(1)
@@ -21,7 +21,7 @@ torch.cuda.manual_seed_all(1)
 
 # training hyperparameters
 N_VIEW = 2
-BATCH_SIZE = 4 # Original = 256, we start with something smaller
+BATCH_SIZE = 2 # Original = 256, we start with something smaller
 ITER = 200000 # Number of epochs to train for
 IMAGE_SIZE = 32
 NUM_CHANNELS = 3
@@ -66,6 +66,7 @@ def create_critic():
 
 
 def create_WALI():
+  
   E = ResNetSimCLR(H_DIM, Z_DIM)
   G = create_generator()
   C = create_critic()
@@ -74,6 +75,12 @@ def create_WALI():
 
 # Training pipeline function
 def main():
+  logging.basicConfig(filename='run1.log')
+  logging.info('This is an info message')
+  logging.info('This is an info message')
+  logging.info('This is an info message')
+  writer = SummaryWriter("runs/cifar10")
+  
   device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
   print('Device:', device)
   wali = create_WALI().to(device)
@@ -93,12 +100,12 @@ def main():
   optimizerC = Adam(wali.get_critic_parameters(), 
     lr=LEARNING_RATE, betas=(BETA1, BETA2))
   # SimCLR Encoder and training scheduler
-  optimizerSimCLR = torch.optim.Adam(wali.get_encoder_parameters(), 0.0003, weight_decay=1e-4)
+  # optimizerSimCLR = torch.optim.Adam(wali.get_encoder_parameters(), 0.0003, weight_decay=1e-4)
 
-  schedulerSimCLR = torch.optim.lr_scheduler.CosineAnnealingLR(optimizerSimCLR, T_max=len(train_loader), eta_min=0,
-                                                           last_epoch=-1)
-  scalerSimCLR = GradScaler(enabled=True)
-  criterionSimCLR = torch.nn.CrossEntropyLoss().to(device)
+  # schedulerSimCLR = torch.optim.lr_scheduler.CosineAnnealingLR(optimizerSimCLR, T_max=len(train_loader), eta_min=0,
+  #                                                          last_epoch=-1)
+  # scalerSimCLR = GradScaler(enabled=True)
+  # criterionSimCLR = torch.nn.CrossEntropyLoss().to(device)
   noise = torch.randn(64, NLAT, 1, 1, device=device)
   
   # Debugging purposes :down
