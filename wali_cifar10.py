@@ -175,7 +175,7 @@ def main():
         if EG_iter == EG_ITERS:
           EG_iter = 0
           C_update, EG_update = True, False
-          curr_iter += 1
+          # curr_iter += 1 # not epoch, but iteration
         else:
           continue
       
@@ -198,7 +198,7 @@ def main():
       # save model
       if curr_iter % 10 == 0:
         torch.save(wali.state_dict(), 'cifar10/models/%d.ckpt' % curr_iter)
-    
+    curr_iter += 1
     # Outside of batch for loop ( simclr schedule updates)
     # if curr_iter >= 10:
     #     schedulerSimCLR.step()
