@@ -10,8 +10,10 @@ from torchvision import datasets, transforms, utils
 import torch.nn.functional as F
 from torch.cuda.amp import GradScaler, autocast
 from stylegan2 import Generator, Discriminator
+from torch.utils.tensorboard import SummaryWriter
 
-
+writer = SummaryWriter("runs/cifar10")
+WRITER_ITER = 10
 cudnn.benchmark = True
 torch.manual_seed(1)
 torch.cuda.manual_seed_all(1)
@@ -84,7 +86,7 @@ def main():
   train_loader = torch.utils.data.DataLoader(
       train_dataset, batch_size=BATCH_SIZE, shuffle=True,
       num_workers=12, pin_memory=True, drop_last=True)
-  
+  n_total_runs = len(train_loader)
   # FIXME - wali.get_encoder_parameters() might be the entire resnet + MLP. - FIXED
   optimizerEG = Adam(list(wali.get_encoder_parameters()) + list(wali.get_generator_parameters()), 
     lr=LEARNING_RATE, betas=(BETA1, BETA2))
@@ -108,6 +110,7 @@ def main():
   
   while curr_iter < ITER:
     for batch_idx, (x, _) in enumerate(train_loader, 1):
+      running_losses = [0, 0]
       print("batch_idx: ", batch_idx)
 
       # Transformed, original image
@@ -131,6 +134,8 @@ def main():
       # x[2] is the original image TODO
       z = torch.randn(x[2].size(0), H_DIM, 1, 1).to(device)
       C_loss, EG_loss = wali(x, z, lamb=LAMBDA, device=device)
+      running_losses[0] += C_loss.item()
+      running_losses[1] += EG_loss.item()
       print("loss calculated C_loss: ", C_loss, "EG_loss: ",  EG_loss)
 
       # C_update: C_loss and Reconstruction loss
@@ -163,7 +168,11 @@ def main():
           curr_iter += 1
         else:
           continue
-
+        if batch_idx // WRITER_ITER == 0:
+          print('Iter: {}, Batch: {} C_loss: {:.4f}, EG_loss: {:.4f}'.format(
+            curr_iter, batch_idx, C_loss.item(), EG_loss.item()))
+          writer.add_scalar('C_loss', running_losses[0], (curr_iter - 1) * n_total_runs + batch_idx)
+          writer.add_scalar('EG_loss', running_losses[1], (curr_iter - 1) * n_total_runs + batch_idx)
       # # print training statistics
       # if curr_iter % 100 == 0:
       #   print('[%d/%d]\tW-distance: %.4f\tC-loss: %.4f'
