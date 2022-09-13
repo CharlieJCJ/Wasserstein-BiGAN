@@ -13,7 +13,7 @@ H_DIM = 512
 DIM = 128
 NUM_CHANNELS = 3
 N_VIEW = 2
-BATCH_SIZE = 64 # Original = 256, we start with something smaller
+BATCH_SIZE = 16 # Original = 256, we start with something smaller
 def log_odds(p):
   p = torch.clamp(p.mean(dim=0), 1e-7, 1-1e-7)
   return torch.log(p / (1 - p))
@@ -213,8 +213,8 @@ class WALI(nn.Module):
     # x_tilde is the generated image
     transformed_imgs = torch.cat([x[0], x[1]], dim=0) # expecting 512 * 3 * 32 * 32 (batch size is 256)
     original_imgs = x[2]
-    # transformed_imgs = transformed_imgs.to(device)
-    # original_imgs = original_imgs.to(device)
+    transformed_imgs = transformed_imgs.to(device)
+    original_imgs = original_imgs.to(device)
 
 
     # print("x: ", original_imgs.shape, "h: ", h.shape)
