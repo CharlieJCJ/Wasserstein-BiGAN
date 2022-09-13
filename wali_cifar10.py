@@ -196,7 +196,7 @@ def main():
       #   wali.train()
 
       # save model
-      if curr_iter % (ITER // 10) == 0:
+      if curr_iter % 10 == 0:
         torch.save(wali.state_dict(), 'cifar10/models/%d.ckpt' % curr_iter)
     
     # Outside of batch for loop ( simclr schedule updates)
