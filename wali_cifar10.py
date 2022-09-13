@@ -168,7 +168,7 @@ def main():
           curr_iter += 1
         else:
           continue
-        if batch_idx // WRITER_ITER == 0:
+        if batch_idx % WRITER_ITER == 0:
           print('Iter: {}, Batch: {} C_loss: {:.4f}, EG_loss: {:.4f}'.format(
             curr_iter, batch_idx, C_loss.item(), EG_loss.item()))
           writer.add_scalar('C_loss', running_losses[0], (curr_iter - 1) * n_total_runs + batch_idx)
