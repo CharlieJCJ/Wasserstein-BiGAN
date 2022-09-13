@@ -21,7 +21,7 @@ torch.cuda.manual_seed_all(1)
 
 # training hyperparameters
 N_VIEW = 2
-BATCH_SIZE = 2 # Original = 256, we start with something smaller
+BATCH_SIZE = 64 # Original = 256, we start with something smaller
 ITER = 200000 # Number of epochs to train for
 IMAGE_SIZE = 32
 NUM_CHANNELS = 3
@@ -80,7 +80,7 @@ def main():
   logging.info('This is an info message')
   logging.info('This is an info message')
   writer = SummaryWriter("runs/cifar10")
-  
+
   device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
   print('Device:', device)
   wali = create_WALI().to(device)
