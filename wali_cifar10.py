@@ -75,7 +75,7 @@ def create_WALI():
 
 # Training pipeline function
 def main():
-  logging.basicConfig(filename='run2.log', level=logging.DEBUG)
+  logging.basicConfig(filename='run3.log', level=logging.DEBUG)
   logging.info('Start training')
   writer = SummaryWriter("runs/cifar10")
 
@@ -116,7 +116,7 @@ def main():
   for curr_iter in range(ITER):
     for batch_idx, (x, _) in enumerate(train_loader, 1):
       running_losses = [0, 0]
-      print("batch_idx: ", batch_idx)
+      # print("batch_idx: ", batch_idx)
 
       # Transformed, original image
       transformed_imgs = torch.cat([x[0], x[1]], dim=0) # expecting 512 * 3 * 32 * 32 (batch size is 256)
@@ -143,7 +143,7 @@ def main():
       running_losses[1] += EG_loss.item()
       # print("loss calculated C_loss: ", C_loss, "EG_loss: ",  EG_loss)
       if batch_idx % WRITER_ITER == 0:
-        print('Iter: {}, Batch: {} C_loss: {:.4f}, EG_loss: {:.4f}'.format(
+        print('Epoch: {}, Batch: {} C_loss: {:.4f}, EG_loss: {:.4f}'.format(
           curr_iter, batch_idx, C_loss.item(), EG_loss.item()))
         # writer.add_scalar('C_loss', running_losses[0], (curr_iter - 1) * n_total_runs + batch_idx)
         # writer.add_scalar('EG_loss', running_losses[1], (curr_iter - 1) * n_total_runs + batch_idx)
