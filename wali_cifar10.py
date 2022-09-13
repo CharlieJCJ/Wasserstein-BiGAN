@@ -196,8 +196,10 @@ def main():
       #   wali.train()
 
       # save model
-    if curr_iter % 10 == 0:
-      torch.save(wali.state_dict(), 'cifar10/models/{curr_iter}-{batch_idx}.ckpt')
+    if curr_iter % 5 == 0:
+      torch.save(wali.state_dict(), f'cifar10/models/{curr_iter}-{batch_idx}.ckpt')
+      print(f'Model saved to cifar10/models/{curr_iter}-{batch_idx}.ckpt')
+      logging.info(f"Model saved to cifar10/models/{curr_iter}-{batch_idx}.ckpt")
     
     # Outside of batch for loop ( simclr schedule updates)
     # if curr_iter >= 10:
