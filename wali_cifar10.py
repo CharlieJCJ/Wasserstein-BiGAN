@@ -1,77 +1,25 @@
+from asyncio import constants
 import torch
 import torch.nn as nn
 import torch.backends.cudnn as cudnn
 import matplotlib.pyplot as plt
 from torch.optim import Adam
 from torch.utils import data
-from torch.nn import Conv2d, BatchNorm2d, LeakyReLU, ReLU, Tanh
 from util import JointCritic, WALI, ResNetSimCLR, ContrastiveLearningDataset, DeterministicConditional
 from torchvision import datasets, transforms, utils
 import torch.nn.functional as F
 from torch.cuda.amp import GradScaler, autocast
-from stylegan2 import Generator, Discriminator
 from torch.utils.tensorboard import SummaryWriter
 import logging
+from constants import *
+from models import create_WALI
 
-WRITER_ITER = 10
 cudnn.benchmark = True
 torch.manual_seed(1)
 torch.cuda.manual_seed_all(1)
 
 
-# training hyperparameters
-N_VIEW = 2
-BATCH_SIZE = 16 # Original = 256, we start with something smaller
-ITER = 200000 # Number of epochs to train for
-IMAGE_SIZE = 32
-NUM_CHANNELS = 3
-H_DIM = 512
-Z_DIM = 128
-NLAT = 512
-DIM_D = 8192 # Need to check the size in stylegan2.py using test()
 
-LEAK = 0.2
-
-# FIXME
-DIM = 128
-C_ITERS = 5       # critic iterations
-EG_ITERS = 1      # encoder / generator iterations
-LAMBDA = 10       # strength of gradient penalty
-LEARNING_RATE = 1e-4
-BETA1 = 0.5
-BETA2 = 0.9
-
-# dataset path
-CIFAR_PATH = r'~\torch\data\CIFAR10'
-
-def create_generator():
-  return Generator(IMAGE_SIZE, H_DIM, 8)
-
-def create_critic():
-  x_mapping = Discriminator(IMAGE_SIZE)
-  # FIXME -  Question: what is DIM?
-  # kernal size is 1, stride is 1, padding is 0. 
-  z_mapping = nn.Sequential(
-    Conv2d(H_DIM, 512, 1, 1, 0), LeakyReLU(LEAK),
-    Conv2d(512, 512, 1, 1, 0), LeakyReLU(LEAK))
-  
-  # DIM_D = 8192 - dimension from discriminator
-  joint_mapping = nn.Sequential(
-    Conv2d(DIM_D + 512, 1024, 1, 1, 0), LeakyReLU(LEAK),
-    Conv2d(1024, 1024, 1, 1, 0), LeakyReLU(LEAK),
-    Conv2d(1024, 1, 1, 1, 0))
-  # last output channel is 1, output 0, 1.
-
-  return JointCritic(x_mapping, z_mapping, joint_mapping)
-
-
-def create_WALI():
-  
-  E = ResNetSimCLR(H_DIM, Z_DIM)
-  G = create_generator()
-  C = create_critic()
-  wali = WALI(E, G, C)
-  return wali
 
 # Training pipeline function
 def main():

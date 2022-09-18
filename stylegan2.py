@@ -5,7 +5,7 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 from torch.autograd import Function
-
+import numpy as np
 from op import FusedLeakyReLU, fused_leaky_relu, upfirdn2d, conv2d_gradfix
 
 
@@ -14,6 +14,9 @@ class PixelNorm(nn.Module):
         super().__init__()
 
     def forward(self, input):
+        if len(input.shape) == 1:
+            input = input.reshape([1, -1]).to(input.device)
+        # print(input.shape, torch.mean(input ** 2, dim=1, keepdim=True).shape, torch.rsqrt(torch.mean(input ** 2, dim=1, keepdim=True) + 1e-8))
         return input * torch.rsqrt(torch.mean(input ** 2, dim=1, keepdim=True) + 1e-8)
 
 
@@ -147,13 +150,18 @@ class EqualLinear(nn.Module):
         self.lr_mul = lr_mul
 
     def forward(self, input):
+        print("equal linear", input.shape)
+        # print(self.weight, self.scale)
         if self.activation:
-            out = F.linear(input, self.weight * self.scale)
+            out = F.linear(input.double(), self.weight.double() * self.scale)
+            print("success")
             out = fused_leaky_relu(out, self.bias * self.lr_mul)
 
         else:
+            print(self.weight.double())
+            print(self.bias.double())
             out = F.linear(
-                input, self.weight * self.scale, bias=self.bias * self.lr_mul
+                input.double(), self.weight.double() * self.scale, bias=self.bias.double() * self.lr_mul
             )
 
         return out
@@ -425,7 +433,7 @@ class Generator(nn.Module):
             1024: 16 * channel_multiplier,
         }
 
-        self.input = ConstantInput(self.channels[4])
+        self.input = ConstantInput(self.channels[4]).double()
         self.conv1 = StyledConv(
             self.channels[4], self.channels[4], 3, style_dim, blur_kernel=blur_kernel
         )
