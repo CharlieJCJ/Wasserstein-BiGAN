@@ -15,6 +15,7 @@ import logging
 import click
 # from constants import *
 
+
 # training hyperparameters
 N_VIEW = 2
 BATCH_SIZE = 16 # Original = 256, we start with something smaller
@@ -83,7 +84,7 @@ def create_WALI():
 @click.command()
 @click.option('--model', type=str, help='Model filename', required=True)
 @click.option('--log', type=str, help='logName', required=True)
-def train(model, log):
+def main(model, log):
   logging.basicConfig(filename=f'{log}.log', level=logging.DEBUG)
   logging.info('Start training')
   writer = SummaryWriter("runs/cifar10")
@@ -236,4 +237,4 @@ def test_size(train_loader):
 
 
 if __name__ == "__main__":
-  train()
+  main()
