@@ -15,7 +15,8 @@ from torch.utils.tensorboard import SummaryWriter
 import logging
 import click
 from constants import *
-
+import os
+os.environ['CUDA_VISIBLE_DEVICES']='2, 3, 4, 5'
 
 
 
@@ -67,6 +68,7 @@ def main(model, log, baseline):
   device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
   print('Device:', device)
   wali = create_WALI().to(device)
+  wali = torch.nn.DataParallel(wali, device_ids=[0, 1, 2, 3])
 
   # Load CIFAR10 dataset
   dataset = ContrastiveLearningDataset("./datasets")
@@ -97,7 +99,7 @@ def main(model, log, baseline):
   curr_iter = C_iter = EG_iter = 0
   C_update, EG_update = True, False
   print('Training starts...')
-  torch.save(wali.state_dict(), f'cifar10/models/{model} init.ckpt')
+  torch.save(wali.model.module.state_dict(), f'cifar10/models/{model}-init.ckpt')
   for curr_iter in range(ITER):
     for batch_idx, (x, _) in enumerate(train_loader, 1):
       running_losses = [0, 0]
@@ -182,9 +184,9 @@ def main(model, log, baseline):
 
       # save model
     if curr_iter % 5 == 0:
-      torch.save(wali.state_dict(), f'cifar10/models/{model} epoch {curr_iter}.ckpt')
-      print(f'Model saved to cifar10/models/{model} epoch {curr_iter}.ckpt')
-      logging.info(f"Model saved to cifar10/models/{model} epoch {curr_iter}.ckpt")
+      torch.save(wali.state_dict(), f'cifar10/models/{model}-epoch-{curr_iter}.ckpt')
+      print(f'Model saved to cifar10/models/{model}-epoch-{curr_iter}.ckpt')
+      logging.info(f"Model saved to cifar10/models/{model}-epoch-{curr_iter}.ckpt")
     
     # Outside of batch for loop ( simclr schedule updates)
     # if curr_iter >= 10:
