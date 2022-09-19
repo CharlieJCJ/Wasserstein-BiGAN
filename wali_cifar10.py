@@ -13,7 +13,7 @@ from torch.utils.tensorboard import SummaryWriter
 import logging
 from constants import *
 from models import create_WALI
-
+import click
 cudnn.benchmark = True
 torch.manual_seed(1)
 torch.cuda.manual_seed_all(1)
@@ -22,8 +22,11 @@ torch.cuda.manual_seed_all(1)
 
 
 # Training pipeline function
-def main():
-  logging.basicConfig(filename='run4.log', level=logging.DEBUG)
+@click.command()
+@click.option('--modelName', help='Model filename', required=True)
+@click.option('--log', help='logName', required=True)
+def train(modelName, log):
+  logging.basicConfig(filename=f'{log}.log', level=logging.DEBUG)
   logging.info('Start training')
   writer = SummaryWriter("runs/cifar10")
 
@@ -60,19 +63,10 @@ def main():
   curr_iter = C_iter = EG_iter = 0
   C_update, EG_update = True, False
   print('Training starts...')
-  torch.save(wali.state_dict(), 'cifar10/models/init.ckpt')
+  torch.save(wali.state_dict(), f'cifar10/models/{modelName} init.ckpt')
   for curr_iter in range(ITER):
     for batch_idx, (x, _) in enumerate(train_loader, 1):
       running_losses = [0, 0]
-      # print("batch_idx: ", batch_idx)
-
-      # Transformed, original image
-      transformed_imgs = torch.cat([x[0], x[1]], dim=0) # expecting 512 * 3 * 32 * 32 (batch size is 256)
-      original_imgs = x[2]
-      transformed_imgs = transformed_imgs.to(device)
-      original_imgs = original_imgs.to(device)
-      # print("data loaded")
-      # print(original_imgs.shape)
       ############################
       # Starting BiGAN procedures
     
@@ -86,15 +80,13 @@ def main():
       # original_imgs.size(0) = batch size
       # x[2] is the original image TODO
       z = torch.randn(x[2].size(0), H_DIM, 1, 1).to(device)
-      C_loss, EG_loss = wali(x, z, lamb=LAMBDA, device=device)
+      C_loss, EG_loss = wali(x, z, lamb=LAMBDA, device=device, baseline = baseline)
       running_losses[0] += C_loss.item()
       running_losses[1] += EG_loss.item()
       # print("loss calculated C_loss: ", C_loss, "EG_loss: ",  EG_loss)
       if batch_idx % WRITER_ITER == 0:
         print('Epoch: {}, Batch: {} C_loss: {:.4f}, EG_loss: {:.4f}'.format(
           curr_iter, batch_idx, C_loss.item(), EG_loss.item()))
-        # writer.add_scalar('C_loss', running_losses[0], (curr_iter - 1) * n_total_runs + batch_idx)
-        # writer.add_scalar('EG_loss', running_losses[1], (curr_iter - 1) * n_total_runs + batch_idx)
         logging.info('C_loss: ' + str(running_losses[0]) + 'EG_loss: '+ str(running_losses[1]) + " epoch: " + str(curr_iter) + " batch"+ str((curr_iter) * n_total_runs + batch_idx))
       # C_update: C_loss and Reconstruction loss
       if C_update:
@@ -103,7 +95,6 @@ def main():
         C_loss.backward()
         # C_losses.append(C_loss.item())
         optimizerC.step()
-
         C_iter += 1
         
         # Switch C to EG update
@@ -123,7 +114,6 @@ def main():
         if EG_iter == EG_ITERS:
           EG_iter = 0
           C_update, EG_update = True, False
-          # curr_iter += 1 # not epoch, but iteration
         else:
           continue
       
@@ -145,11 +135,11 @@ def main():
 
       # save model
     if curr_iter % 5 == 0:
-      torch.save(wali.state_dict(), f'cifar10/models/{curr_iter}-{batch_idx}.ckpt')
-      print(f'Model saved to cifar10/models/{curr_iter}-{batch_idx}.ckpt')
-      logging.info(f"Model saved to cifar10/models/{curr_iter}-{batch_idx}.ckpt")
+      torch.save(wali.state_dict(), f'cifar10/models/{modelName} epoch {curr_iter}.ckpt')
+      print(f'Model saved to cifar10/models/{modelName} epoch {curr_iter}.ckpt')
+      logging.info(f"Model saved to cifar10/models/{modelName} epoch {curr_iter}.ckpt")
     
-    # Outside of batch for loop ( simclr schedule updates)
+    # Outside of batch for loop (simclr schedule updates)
     # if curr_iter >= 10:
     #     schedulerSimCLR.step()
   print("End of training")
@@ -175,4 +165,4 @@ def test_size(train_loader):
 
 
 if __name__ == "__main__":
-  main()
+  train()

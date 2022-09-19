@@ -206,29 +206,35 @@ class WALI(nn.Module):
   # FIXME: check the variable names. 
   # Now: I pass in original images
   # Edit: x is now 3 dimensional
-  def forward(self, x, h, lamb=10, device="cuda"):
+  def forward(self, x, h, lamb=10, device="cuda", baseline = False):
     # x_tilde is the generated image
     transformed_imgs = torch.cat([x[0], x[1]], dim=0) # expecting 512 * 3 * 32 * 32 (batch size is 256)
     original_imgs = x[2]
     transformed_imgs = transformed_imgs.to(device)
     original_imgs = original_imgs.to(device)
 
-
+    
     # print("x: ", original_imgs.shape, "h: ", h.shape)
     (h_hat, z_hat),  x_tilde = self.encode(original_imgs), self.generate([h]) # FIXME not self.encode, it has two outputs. 
                                                                 # We don't need z_hat in this case.
     # print(h_hat.shape, z_hat.shape, x_tilde.shape)
-    criterionSimCLR = torch.nn.CrossEntropyLoss().to(device)
-    with autocast(enabled=True):
-        # print("get constrastive loss")
-        # use forward
-        __, features = self.encode(transformed_imgs) # only use z
-        logits, labels = info_nce_loss(features, device)
-        Constrastive_loss = criterionSimCLR(logits, labels)
-    data_preds, sample_preds = self.criticize(original_imgs, h_hat, x_tilde, h) 
-    EG_loss = torch.mean(data_preds - sample_preds)
-    C_loss = -EG_loss + lamb * self.calculate_grad_penalty(original_imgs.data, h_hat.data, x_tilde.data, h.data)
-    Reconstruction_loss = nn.MSELoss()(original_imgs, self.generate([h_hat]))    # Need to check this - z is basically vector h? H_DIM, Z_DIM
+    if baseline: 
+      data_preds, sample_preds = self.criticize(original_imgs, h_hat, x_tilde, h) 
+      EG_loss = torch.mean(data_preds - sample_preds)
+      C_loss = -EG_loss + lamb * self.calculate_grad_penalty(original_imgs.data, h_hat.data, x_tilde.data, h.data)
+      return C_loss , EG_loss
+    else:
+      criterionSimCLR = torch.nn.CrossEntropyLoss().to(device)
+      with autocast(enabled=True):
+          # print("get constrastive loss")
+          # use forward
+          __, features = self.encode(transformed_imgs) # only use z
+          logits, labels = info_nce_loss(features, device)
+          Constrastive_loss = criterionSimCLR(logits, labels)
+      data_preds, sample_preds = self.criticize(original_imgs, h_hat, x_tilde, h) 
+      EG_loss = torch.mean(data_preds - sample_preds)
+      C_loss = -EG_loss + lamb * self.calculate_grad_penalty(original_imgs.data, h_hat.data, x_tilde.data, h.data)
+      Reconstruction_loss = nn.MSELoss()(original_imgs, self.generate([h_hat]))    # Need to check this - z is basically vector h? H_DIM, Z_DIM
     return C_loss + Reconstruction_loss, EG_loss + Constrastive_loss
 def info_nce_loss(features, device):
     features = features.reshape((features.shape[0], features.shape[1]))
