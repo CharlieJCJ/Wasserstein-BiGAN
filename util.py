@@ -9,8 +9,11 @@ from torch.nn import Conv2d, ConvTranspose2d, BatchNorm2d, LeakyReLU, ReLU, Tanh
 from torch.cuda.amp import GradScaler, autocast
 from resnet import ResNet50
 import numpy as np
-from constants import *
-
+H_DIM = 512
+DIM = 128
+NUM_CHANNELS = 3
+N_VIEW = 2
+BATCH_SIZE = 16 # Original = 256, we start with something smaller
 def log_odds(p):
   p = torch.clamp(p.mean(dim=0), 1e-7, 1-1e-7)
   return torch.log(p / (1 - p))
@@ -216,14 +219,12 @@ class WALI(nn.Module):
     (h_hat, z_hat),  x_tilde = self.encode(original_imgs), self.generate([h]) # FIXME not self.encode, it has two outputs. 
                                                                 # We don't need z_hat in this case.
     # print(h_hat.shape, z_hat.shape, x_tilde.shape)
-    if baseline:
-      print("Baseline training") 
+    if baseline: 
       data_preds, sample_preds = self.criticize(original_imgs.double(), h_hat.double(), x_tilde.double(), h.double()) 
       EG_loss = torch.mean(data_preds - sample_preds)
       C_loss = -EG_loss + lamb * self.calculate_grad_penalty(original_imgs.data, h_hat.data, x_tilde.data, h.data)
       return C_loss , EG_loss
     else:
-      print("Non-Baseline training")
       criterionSimCLR = torch.nn.CrossEntropyLoss().to(device)
       with autocast(enabled=True):
           # print("get constrastive loss")
@@ -373,7 +374,7 @@ class ContrastiveLearningViewGenerator(object):
             transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
         # print("My length is", len([self.base_transform(x) for i in range(self.n_views)] + [transform(x)]))
         # return [self.base_transform(x) for i in range(self.n_views)]
-        return self.base_transform(x).double(), self.base_transform(x).double(), transform(x).double() # dataloader handles the rest
+        return self.base_transform(x), self.base_transform(x), transform(x) # dataloader handles the rest
 
 
 class GaussianBlur(object):

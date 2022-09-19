@@ -13,10 +13,39 @@ from stylegan2 import Generator, Discriminator
 from torch.utils.tensorboard import SummaryWriter
 import logging
 import click
-from constants import *
+# from constants import *
 
 
+# training hyperparameters
+N_VIEW = 2
+BATCH_SIZE = 16 # Original = 256, we start with something smaller
+ITER = 200000 # Number of epochs to train for
+IMAGE_SIZE = 32
+NUM_CHANNELS = 3
+H_DIM = 512
+Z_DIM = 128
+NLAT = 512
+DIM_D = 8192 # Need to check the size in stylegan2.py using test(); checked
 
+LEAK = 0.2
+
+DIM = 128
+C_ITERS = 5       # critic iterations
+EG_ITERS = 1      # encoder / generator iterations
+LAMBDA = 10       # strength of gradient penalty
+LEARNING_RATE = 1e-4
+BETA1 = 0.5
+BETA2 = 0.9
+
+# dataset path
+CIFAR_PATH = r'~\torch\data\CIFAR10'
+
+WRITER_ITER = 10
+
+# Baseline setting
+baseline = True
+
+WRITER_ITER = 10
 cudnn.benchmark = True
 torch.manual_seed(1)
 torch.cuda.manual_seed_all(1)
@@ -44,6 +73,7 @@ def create_critic():
 
 
 def create_WALI():
+  
   E = ResNetSimCLR(H_DIM, Z_DIM)
   G = create_generator()
   C = create_critic()
@@ -54,8 +84,7 @@ def create_WALI():
 @click.command()
 @click.option('--model', type=str, help='Model filename', required=True)
 @click.option('--log', type=str, help='logName', required=True)
-@click.option('--baseline', type=bool, help='baseline', default = True)
-def main(model, log, baseline):
+def main(model, log):
   logging.basicConfig(filename=f'{log}.log', level=logging.DEBUG)
   logging.info('Start training')
   writer = SummaryWriter("runs/cifar10")
@@ -93,13 +122,12 @@ def main(model, log, baseline):
   curr_iter = C_iter = EG_iter = 0
   C_update, EG_update = True, False
   print('Training starts...')
-  torch.save(wali.state_dict(), f'cifar10/models/{model}-init.ckpt')
+  torch.save(wali.state_dict(), f'cifar10/models/{model} init.ckpt')
   for curr_iter in range(ITER):
     for batch_idx, (x, _) in enumerate(train_loader, 1):
       running_losses = [0, 0]
       # print("batch_idx: ", batch_idx)
 
- 
       # Transformed, original image
       transformed_imgs = torch.cat([x[0], x[1]], dim=0) # expecting 512 * 3 * 32 * 32 (batch size is 256)
       original_imgs = x[2]
@@ -120,7 +148,7 @@ def main(model, log, baseline):
       # original_imgs.size(0) = batch size
       # x[2] is the original image TODO
       z = torch.randn(x[2].size(0), H_DIM, 1, 1).to(device)
-      C_loss, EG_loss = wali(x, z, lamb=LAMBDA, device=device, baseline=baseline)
+      C_loss, EG_loss = wali(x, z, lamb=LAMBDA, device=device)
       running_losses[0] += C_loss.item()
       running_losses[1] += EG_loss.item()
       # print("loss calculated C_loss: ", C_loss, "EG_loss: ",  EG_loss)
@@ -179,9 +207,9 @@ def main(model, log, baseline):
 
       # save model
     if curr_iter % 5 == 0:
-      torch.save(wali.state_dict(), f'cifar10/models/{model}-epoch-{curr_iter}.ckpt')
-      print(f'Model saved to cifar10/models/{model}-epoch-{curr_iter}.ckpt')
-      logging.info(f"Model saved to cifar10/models/{model}-epoch-{curr_iter}.ckpt")
+      torch.save(wali.state_dict(), f'cifar10/models/{model} epoch {curr_iter}.ckpt')
+      print(f'Model saved to cifar10/models/{model} epoch {curr_iter}.ckpt')
+      logging.info(f"Model saved to cifar10/models/{model} epoch {curr_iter}.ckpt")
     
     # Outside of batch for loop ( simclr schedule updates)
     # if curr_iter >= 10:
