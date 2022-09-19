@@ -70,13 +70,13 @@ def main(model, log, baseline, local_rank):
   writer = SummaryWriter("runs/cifar10")
 
   # setup port
-  # master_port = find_free_port()
-  # os.environ['MASTER_PORT'] = master_port 
+  master_port = find_free_port()
+  os.environ['MASTER_PORT'] = master_port 
 
   os.environ["MASTER_ADDR"] = "localhost"
-  os.environ["MASTER_PORT"] = "12355"
+  # os.environ["MASTER_PORT"] = "12355"
 
-  # print(master_port)
+  print(master_port)
   # DDP settings
   print("Start distributed init")
   torch.distributed.init_process_group(backend="nccl", rank = 0, world_size=4)
