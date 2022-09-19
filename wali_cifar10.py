@@ -14,13 +14,12 @@ from torch.utils.tensorboard import SummaryWriter
 import logging
 import click
 from constants import *
-
-
+import os
 
 cudnn.benchmark = True
 torch.manual_seed(1)
 torch.cuda.manual_seed_all(1)
-
+os.environ['CUDA_VISIBLE_DEVICES']='0, 1, 2, 3' # two Titan + two 2080Ti
 
 def create_generator():
   return Generator(IMAGE_SIZE, H_DIM, 8)
@@ -54,23 +53,32 @@ def create_WALI():
 @click.command()
 @click.option('--model', type=str, help='Model filename', required=True)
 @click.option('--log', type=str, help='logName', required=True)
-def main(model, log):
+@click.option('--baseline', type=bool, help='baseline', default = False)
+def main(model, log, baseline):
+  print("model: ", model, "log: ", log, "baseline: ", baseline)
   logging.basicConfig(filename=f'{log}.log', level=logging.DEBUG)
   logging.info('Start training')
   writer = SummaryWriter("runs/cifar10")
 
+  # DDP settings
+  torch.distributed.init_process_group(backend="nccl", world_size=4, rank=0)
+
+
   device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
   print('Device:', device)
   wali = create_WALI().to(device)
+  wali = torch.nn.parallel.DistributedDataParallel(wali, device_ids=[0, 1, 2, 3])
 
   # Load CIFAR10 dataset
   dataset = ContrastiveLearningDataset("./datasets")
   # Each have 2 views (2 views + original image)
   train_dataset = dataset.get_dataset("cifar10", N_VIEW)
+  train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset)
+
 
   train_loader = torch.utils.data.DataLoader(
       train_dataset, batch_size=BATCH_SIZE, shuffle=True,
-      num_workers=12, pin_memory=True, drop_last=True)
+      num_workers=12, pin_memory=True, drop_last=True, sampler = train_sampler)
   n_total_runs = len(train_loader)
   # FIXME - wali.get_encoder_parameters() might be the entire resnet + MLP. - FIXED
   optimizerEG = Adam(list(wali.get_encoder_parameters()) + list(wali.get_generator_parameters()), 
@@ -92,7 +100,7 @@ def main(model, log):
   curr_iter = C_iter = EG_iter = 0
   C_update, EG_update = True, False
   print('Training starts...')
-  torch.save(wali.state_dict(), f'cifar10/models/{model} init.ckpt')
+  torch.save(wali.state_dict(), f'cifar10/models/{model}-init.ckpt')
   for curr_iter in range(ITER):
     for batch_idx, (x, _) in enumerate(train_loader, 1):
       running_losses = [0, 0]
@@ -118,7 +126,7 @@ def main(model, log):
       # original_imgs.size(0) = batch size
       # x[2] is the original image TODO
       z = torch.randn(x[2].size(0), H_DIM, 1, 1).to(device)
-      C_loss, EG_loss = wali(x, z, lamb=LAMBDA, device=device)
+      C_loss, EG_loss = wali(x, z, lamb=LAMBDA, device=device, baseline=baseline)
       running_losses[0] += C_loss.item()
       running_losses[1] += EG_loss.item()
       # print("loss calculated C_loss: ", C_loss, "EG_loss: ",  EG_loss)
@@ -177,9 +185,9 @@ def main(model, log):
 
       # save model
     if curr_iter % 5 == 0:
-      torch.save(wali.state_dict(), f'cifar10/models/{model} epoch {curr_iter}.ckpt')
-      print(f'Model saved to cifar10/models/{model} epoch {curr_iter}.ckpt')
-      logging.info(f"Model saved to cifar10/models/{model} epoch {curr_iter}.ckpt")
+      torch.save(wali.state_dict(), f'cifar10/models/{model}-epoch-{curr_iter}.ckpt')
+      print(f'Model saved to cifar10/models/{model}-epoch-{curr_iter}.ckpt')
+      logging.info(f"Model saved to cifar10/models/{model}-epoch-{curr_iter}.ckpt")
     
     # Outside of batch for loop ( simclr schedule updates)
     # if curr_iter >= 10:
