@@ -85,7 +85,7 @@ def create_WALI():
 @click.option('--model', type=str, help='Model filename', required=True)
 @click.option('--log', type=str, help='logName', required=True)
 @click.option('--baseline', type=bool, help='baseline', default= False)
-def main(model, log):
+def main(model, log, baseline):
   logging.basicConfig(filename=f'{log}.log', level=logging.DEBUG)
   logging.info('Start training')
   writer = SummaryWriter("runs/cifar10")
