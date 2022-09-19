@@ -63,7 +63,7 @@ def find_free_port():
 @click.option('--log', type=str, help='logName', default = "run5")
 @click.option('--baseline', type=bool, help='baseline', default = True)
 @click.option('--local_rank', type=int, default=0)
-def main(model, log, baseline):
+def main(model, log, baseline, local_rank):
   print("model: ", model, "log: ", log, "baseline: ", baseline)
   logging.basicConfig(filename=f'{log}.log', level=logging.DEBUG)
   logging.info('Start training')
