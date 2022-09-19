@@ -99,6 +99,7 @@ def main(model, log, baseline):
       running_losses = [0, 0]
       # print("batch_idx: ", batch_idx)
 
+ 
       # Transformed, original image
       transformed_imgs = torch.cat([x[0], x[1]], dim=0) # expecting 512 * 3 * 32 * 32 (batch size is 256)
       original_imgs = x[2]
