@@ -59,9 +59,9 @@ def find_free_port():
         return str(s.getsockname()[1])
 # Training pipeline function
 @click.command()
-@click.option('--model', type=str, help='Model filename', required=True)
-@click.option('--log', type=str, help='logName', required=True)
-@click.option('--baseline', type=bool, help='baseline', default = False)
+@click.option('--model', type=str, help='Model filename', default = "baseline_actual")
+@click.option('--log', type=str, help='logName', default = "run5")
+@click.option('--baseline', type=bool, help='baseline', default = True)
 def main(model, log, baseline):
   print("model: ", model, "log: ", log, "baseline: ", baseline)
   logging.basicConfig(filename=f'{log}.log', level=logging.DEBUG)
