@@ -67,8 +67,8 @@ def main(model, log, baseline):
 
   device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
   print('Device:', device)
-  wali = create_WALI()
-  wali = torch.nn.DataParallel(wali, device_ids=[0, 1, 2, 3]).to(device)
+  wali = create_WALI().to(device)
+  
 
   # Load CIFAR10 dataset
   dataset = ContrastiveLearningDataset("./datasets")
@@ -92,7 +92,7 @@ def main(model, log, baseline):
   # scalerSimCLR = GradScaler(enabled=True)
   # criterionSimCLR = torch.nn.CrossEntropyLoss().to(device)
   noise = torch.randn(64, NLAT, 1, 1, device=device)
-  
+  wali = torch.nn.DataParallel(wali, device_ids=[0, 1, 2, 3]).to(device)
   # Debugging purposes :down
   # test_size(train_loader)
   EG_losses, C_losses, R_losses, Constrastive_losses = [], [], [], []
