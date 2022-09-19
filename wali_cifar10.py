@@ -73,13 +73,13 @@ def main(model, log, baseline, local_rank):
   master_port = find_free_port()
   os.environ['MASTER_PORT'] = master_port 
 
-  os.environ["MASTER_ADDR"] = "localhost"
+  os.environ["MASTER_ADDR"] = "127.0.0.1"
   # os.environ["MASTER_PORT"] = "12355"
 
   print(master_port)
   # DDP settings
   print("Start distributed init")
-  torch.distributed.init_process_group(backend="nccl", rank = 0, world_size=4)
+  torch.distributed.init_process_group(backend="nccl", rank = 0, world_size=4, init_method='tcp://')
   print("Success distributed init")
   # torch.cuda.set_device(local_rank)
 
