@@ -67,8 +67,8 @@ def main(model, log, baseline):
 
   device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
   print('Device:', device)
-  wali = create_WALI().to(device)
-  wali = torch.nn.DataParallel(wali, device_ids=[0, 1, 2, 3])
+  wali = create_WALI()
+  wali = torch.nn.DataParallel(wali, device_ids=[0, 1, 2, 3]).to(device)
 
   # Load CIFAR10 dataset
   dataset = ContrastiveLearningDataset("./datasets")
