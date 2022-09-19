@@ -20,7 +20,7 @@ cudnn.benchmark = True
 torch.manual_seed(1)
 torch.cuda.manual_seed_all(1)
 os.environ['CUDA_VISIBLE_DEVICES']='2, 3, 4, 5' # two Titan + two 2080Ti
-os.environ['MASTER_ADDR'] = 'localhost'              
+os.environ['MASTER_ADDR'] = '127.0.0.1'              
 def create_generator():
   return Generator(IMAGE_SIZE, H_DIM, 8)
 
