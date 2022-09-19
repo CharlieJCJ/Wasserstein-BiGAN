@@ -138,7 +138,7 @@ class JointCritic(nn.Module):
   def forward(self, x, z):
     assert x.size(0) == z.size(0)
     x_out = self.x_net(x) # Discriminator
-    z_out = self.z_net(z) # z mapping
+    z_out = self.z_net(z.double()) # z mapping
     # print("x", x.shape, "z", z.shape)
     # print("x_out", x_out.shape, "z_out", z_out.shape)
     joint_input = torch.cat((x_out, z_out), dim=1) # Concatenate
