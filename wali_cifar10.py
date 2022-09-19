@@ -20,7 +20,7 @@ cudnn.benchmark = True
 torch.manual_seed(1)
 torch.cuda.manual_seed_all(1)
 os.environ['CUDA_VISIBLE_DEVICES']='2, 3, 4, 5' # two Titan + two 2080Ti
-os.environ['MASTER_ADDR'] = '127.0.0.1'              
+# os.environ['MASTER_ADDR'] = '127.0.0.1'              
 def create_generator():
   return Generator(IMAGE_SIZE, H_DIM, 8)
 
@@ -70,14 +70,18 @@ def main(model, log, baseline, local_rank):
   writer = SummaryWriter("runs/cifar10")
 
   # setup port
-  master_port = find_free_port()
-  os.environ['MASTER_PORT'] = master_port 
-  print(master_port)
+  # master_port = find_free_port()
+  # os.environ['MASTER_PORT'] = master_port 
+
+  os.environ["MASTER_ADDR"] = "localhost"
+  os.environ["MASTER_PORT"] = "12355"
+
+  # print(master_port)
   # DDP settings
   print("Start distributed init")
-  torch.distributed.init_process_group(backend="nccl", world_size=4)
+  torch.distributed.init_process_group(backend="nccl", rank = 0, world_size=4)
   print("Success distributed init")
-  torch.cuda.set_device(local_rank)
+  # torch.cuda.set_device(local_rank)
 
   device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
   print('Device:', device)
