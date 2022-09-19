@@ -66,7 +66,6 @@ def train(model, log):
   torch.save(wali.state_dict(), f'cifar10/models/{model} init.ckpt')
   for curr_iter in range(ITER):
     for batch_idx, (x, _) in enumerate(train_loader, 1):
-      x = x.to(device)
       running_losses = [0, 0]
       ############################
       # Starting BiGAN procedures
