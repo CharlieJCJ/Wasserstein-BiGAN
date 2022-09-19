@@ -131,7 +131,7 @@ def main(model, log, baseline):
       # print("loss calculated C_loss: ", C_loss, "EG_loss: ",  EG_loss)
       if batch_idx % WRITER_ITER == 0:
         print('Epoch: {}, Batch: {} C_loss: {:.4f}, EG_loss: {:.4f}'.format(
-          curr_iter, batch_idx, C_loss.item(), EG_loss.item()))
+          curr_iter, batch_idx, C_loss.sum(), EG_loss.sum()))
         # writer.add_scalar('C_loss', running_losses[0], (curr_iter - 1) * n_total_runs + batch_idx)
         # writer.add_scalar('EG_loss', running_losses[1], (curr_iter - 1) * n_total_runs + batch_idx)
         logging.info('C_loss: ' + str(running_losses[0]) + 'EG_loss: '+ str(running_losses[1]) + " epoch: " + str(curr_iter) + " batch"+ str((curr_iter) * n_total_runs + batch_idx))
