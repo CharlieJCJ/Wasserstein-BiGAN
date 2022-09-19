@@ -62,8 +62,9 @@ def main(model, log, baseline):
   writer = SummaryWriter("runs/cifar10")
 
   # DDP settings
+  print("Start distributed init")
   torch.distributed.init_process_group(backend="nccl", world_size=4, init_method='env://', rank=0)
-
+  print("Success distributed init")
 
   device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
   print('Device:', device)
