@@ -75,8 +75,9 @@ def main(model, log, baseline, local_rank):
   print(master_port)
   # DDP settings
   print("Start distributed init")
-  torch.distributed.init_process_group(backend="nccl", world_size=4, init_method='env://', rank=0)
+  torch.distributed.init_process_group(backend="nccl", world_size=4)
   print("Success distributed init")
+  torch.cuda.set_device(local_rank)
 
   device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
   print('Device:', device)
