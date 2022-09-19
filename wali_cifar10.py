@@ -126,8 +126,8 @@ def main(model, log, baseline):
       # x[2] is the original image TODO
       z = torch.randn(x[2].size(0), H_DIM, 1, 1).to(device)
       C_loss, EG_loss = wali(x, z, lamb=LAMBDA, device=device, baseline = baseline)
-      running_losses[0] += C_loss.item()
-      running_losses[1] += EG_loss.item()
+      running_losses[0] += C_loss.sum()
+      running_losses[1] += EG_loss.sum()
       # print("loss calculated C_loss: ", C_loss, "EG_loss: ",  EG_loss)
       if batch_idx % WRITER_ITER == 0:
         print('Epoch: {}, Batch: {} C_loss: {:.4f}, EG_loss: {:.4f}'.format(
