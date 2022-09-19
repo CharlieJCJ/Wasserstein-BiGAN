@@ -1,7 +1,7 @@
 
 # training hyperparameters
 N_VIEW = 2
-BATCH_SIZE = 16  # Original = 256, we start with something smaller
+BATCH_SIZE = 16 * 4  # Original = 256, we start with something smaller
 ITER = 200000 # Number of epochs to train for
 IMAGE_SIZE = 32
 NUM_CHANNELS = 3
