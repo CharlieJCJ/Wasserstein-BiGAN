@@ -23,9 +23,9 @@ torch.cuda.manual_seed_all(1)
 
 # Training pipeline function
 @click.command()
-@click.option('--modelName', type=str, help='Model filename', required=True)
+@click.option('--model', type=str, help='Model filename', required=True)
 @click.option('--log', type=str, help='logName', required=True)
-def train(modelName, log):
+def train(model, log):
   logging.basicConfig(filename=f'{log}.log', level=logging.DEBUG)
   logging.info('Start training')
   writer = SummaryWriter("runs/cifar10")
@@ -63,7 +63,7 @@ def train(modelName, log):
   curr_iter = C_iter = EG_iter = 0
   C_update, EG_update = True, False
   print('Training starts...')
-  torch.save(wali.state_dict(), f'cifar10/models/{modelName} init.ckpt')
+  torch.save(wali.state_dict(), f'cifar10/models/{model} init.ckpt')
   for curr_iter in range(ITER):
     for batch_idx, (x, _) in enumerate(train_loader, 1):
       running_losses = [0, 0]
@@ -135,9 +135,9 @@ def train(modelName, log):
 
       # save model
     if curr_iter % 5 == 0:
-      torch.save(wali.state_dict(), f'cifar10/models/{modelName} epoch {curr_iter}.ckpt')
-      print(f'Model saved to cifar10/models/{modelName} epoch {curr_iter}.ckpt')
-      logging.info(f"Model saved to cifar10/models/{modelName} epoch {curr_iter}.ckpt")
+      torch.save(wali.state_dict(), f'cifar10/models/{model} epoch {curr_iter}.ckpt')
+      print(f'Model saved to cifar10/models/{model} epoch {curr_iter}.ckpt')
+      logging.info(f"Model saved to cifar10/models/{model} epoch {curr_iter}.ckpt")
     
     # Outside of batch for loop (simclr schedule updates)
     # if curr_iter >= 10:
