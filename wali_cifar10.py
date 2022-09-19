@@ -70,16 +70,16 @@ def main(model, log, baseline, local_rank):
   writer = SummaryWriter("runs/cifar10")
 
   # setup port
-  master_port = find_free_port()
-  os.environ['MASTER_PORT'] = master_port 
+  # master_port = find_free_port()
+  # os.environ['MASTER_PORT'] = master_port 
 
-  os.environ["MASTER_ADDR"] = "127.0.0.1"
+  # os.environ["MASTER_ADDR"] = "127.0.0.1"
   # os.environ["MASTER_PORT"] = "12355"
 
-  print(master_port)
+  # print(master_port)
   # DDP settings
   print("Start distributed init")
-  torch.distributed.init_process_group(backend="nccl", rank = 0, world_size=4, init_method='tcp://')
+  torch.distributed.init_process_group(backend="nccl", rank = 0, world_size=4, init_method='tcp://127.0.0.1:12355')
   print("Success distributed init")
   # torch.cuda.set_device(local_rank)
 
