@@ -71,7 +71,7 @@ def main(model, log, baseline):
   # setup port
   master_port = find_free_port()
   os.environ['MASTER_PORT'] = master_port 
-
+  print(master_port)
   # DDP settings
   print("Start distributed init")
   torch.distributed.init_process_group(backend="nccl", world_size=4, init_method='env://', rank=0)
