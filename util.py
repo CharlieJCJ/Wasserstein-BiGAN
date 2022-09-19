@@ -216,10 +216,9 @@ class WALI(nn.Module):
                                                                 # We don't need z_hat in this case.
     # print(h_hat.shape, z_hat.shape, x_tilde.shape)
     if baseline:
-      with autocast(enabled=True):
         print("Baseline used")
         data_preds, sample_preds = self.criticize(original_imgs, h_hat, x_tilde, h) 
-        EG_loss = torch.mean(data_preds - sample_preds)
+        EG_loss = torch.mean(data_preds - sample_preds).double()
         C_loss = -EG_loss + lamb * self.calculate_grad_penalty(original_imgs.data, h_hat.data, x_tilde.data, h.data)
         return C_loss , EG_loss
     else:
