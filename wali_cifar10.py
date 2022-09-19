@@ -77,8 +77,11 @@ def create_WALI():
   return wali
 
 # Training pipeline function
-def main():
-  logging.basicConfig(filename='run4.log', level=logging.DEBUG)
+@click.command()
+@click.option('--model', type=str, help='Model filename', required=True)
+@click.option('--log', type=str, help='logName', required=True)
+def train(model, log):
+  logging.basicConfig(filename=f'{log}.log', level=logging.DEBUG)
   logging.info('Start training')
   writer = SummaryWriter("runs/cifar10")
 
@@ -115,7 +118,7 @@ def main():
   curr_iter = C_iter = EG_iter = 0
   C_update, EG_update = True, False
   print('Training starts...')
-  torch.save(wali.state_dict(), 'cifar10/models/init.ckpt')
+  torch.save(wali.state_dict(), f'cifar10/models/{model} init.ckpt')
   for curr_iter in range(ITER):
     for batch_idx, (x, _) in enumerate(train_loader, 1):
       running_losses = [0, 0]
@@ -200,9 +203,9 @@ def main():
 
       # save model
     if curr_iter % 5 == 0:
-      torch.save(wali.state_dict(), f'cifar10/models/{curr_iter}-{batch_idx}.ckpt')
-      print(f'Model saved to cifar10/models/{curr_iter}-{batch_idx}.ckpt')
-      logging.info(f"Model saved to cifar10/models/{curr_iter}-{batch_idx}.ckpt")
+      torch.save(wali.state_dict(), f'cifar10/models/{model} epoch {curr_iter}.ckpt')
+      print(f'Model saved to cifar10/models/{model} epoch {curr_iter}.ckpt')
+      logging.info(f"Model saved to cifar10/models/{model} epoch {curr_iter}.ckpt")
     
     # Outside of batch for loop ( simclr schedule updates)
     # if curr_iter >= 10:
@@ -230,4 +233,4 @@ def test_size(train_loader):
 
 
 if __name__ == "__main__":
-  main()
+  train()
