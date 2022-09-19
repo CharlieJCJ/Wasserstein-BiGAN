@@ -23,8 +23,8 @@ torch.cuda.manual_seed_all(1)
 
 # Training pipeline function
 @click.command()
-@click.option('--modelName', help='Model filename', required=True)
-@click.option('--log', help='logName', required=True)
+@click.option('--modelName', type=str, help='Model filename', required=True)
+@click.option('--log', type=str, help='logName', required=True)
 def train(modelName, log):
   logging.basicConfig(filename=f'{log}.log', level=logging.DEBUG)
   logging.info('Start training')
