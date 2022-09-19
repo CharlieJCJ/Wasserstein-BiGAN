@@ -135,7 +135,7 @@ def conv2d_gradfix(
         @staticmethod
         def forward(ctx, input, weight, bias):
             if not transpose:
-                out = F.conv2d(input=input.double(), weight=weight.double(), bias=bias.double(), **common_kwargs)
+                out = F.conv2d(input=input.double(), weight=weight, bias=bias, **common_kwargs)
 
             else:
                 out = F.conv_transpose2d(
