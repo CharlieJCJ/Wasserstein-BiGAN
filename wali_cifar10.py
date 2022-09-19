@@ -54,6 +54,7 @@ def create_WALI():
 @click.command()
 @click.option('--model', type=str, help='Model filename', required=True)
 @click.option('--log', type=str, help='logName', required=True)
+@click.option('--baseline', type=bool, help='baseline', default = True)
 def main(model, log):
   logging.basicConfig(filename=f'{log}.log', level=logging.DEBUG)
   logging.info('Start training')
@@ -92,7 +93,7 @@ def main(model, log):
   curr_iter = C_iter = EG_iter = 0
   C_update, EG_update = True, False
   print('Training starts...')
-  torch.save(wali.state_dict(), f'cifar10/models/{model} init.ckpt')
+  torch.save(wali.state_dict(), f'cifar10/models/{model}-init.ckpt')
   for curr_iter in range(ITER):
     for batch_idx, (x, _) in enumerate(train_loader, 1):
       running_losses = [0, 0]
@@ -118,7 +119,7 @@ def main(model, log):
       # original_imgs.size(0) = batch size
       # x[2] is the original image TODO
       z = torch.randn(x[2].size(0), H_DIM, 1, 1).to(device)
-      C_loss, EG_loss = wali(x, z, lamb=LAMBDA, device=device)
+      C_loss, EG_loss = wali(x, z, lamb=LAMBDA, device=device, baseline=baseline)
       running_losses[0] += C_loss.item()
       running_losses[1] += EG_loss.item()
       # print("loss calculated C_loss: ", C_loss, "EG_loss: ",  EG_loss)
@@ -177,9 +178,9 @@ def main(model, log):
 
       # save model
     if curr_iter % 5 == 0:
-      torch.save(wali.state_dict(), f'cifar10/models/{model} epoch {curr_iter}.ckpt')
-      print(f'Model saved to cifar10/models/{model} epoch {curr_iter}.ckpt')
-      logging.info(f"Model saved to cifar10/models/{model} epoch {curr_iter}.ckpt")
+      torch.save(wali.state_dict(), f'cifar10/models/{model}-epoch-{curr_iter}.ckpt')
+      print(f'Model saved to cifar10/models/{model}-epoch-{curr_iter}.ckpt')
+      logging.info(f"Model saved to cifar10/models/{model}-epoch-{curr_iter}.ckpt")
     
     # Outside of batch for loop ( simclr schedule updates)
     # if curr_iter >= 10:
