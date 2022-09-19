@@ -215,8 +215,9 @@ class WALI(nn.Module):
     (h_hat, z_hat),  x_tilde = self.encode(original_imgs), self.generate([h]) # FIXME not self.encode, it has two outputs. 
                                                                 # We don't need z_hat in this case.
     # print(h_hat.shape, z_hat.shape, x_tilde.shape)
-    if baseline: 
-      data_preds, sample_preds = self.criticize(original_imgs.double(), h_hat.double(), x_tilde.double(), h.double()) 
+    if baseline:
+      print("Baseline used")
+      data_preds, sample_preds = self.criticize(original_imgs, h_hat, x_tilde, h) 
       EG_loss = torch.mean(data_preds - sample_preds)
       C_loss = -EG_loss + lamb * self.calculate_grad_penalty(original_imgs.data, h_hat.data, x_tilde.data, h.data)
       return C_loss , EG_loss
