@@ -21,7 +21,6 @@ torch.manual_seed(1)
 torch.cuda.manual_seed_all(1)
 os.environ['CUDA_VISIBLE_DEVICES']='2, 3, 4, 5' # two Titan + two 2080Ti
 os.environ['MASTER_ADDR'] = 'localhost'              
-os.environ['MASTER_PORT'] = '8888' 
 def create_generator():
   return Generator(IMAGE_SIZE, H_DIM, 8)
 
@@ -49,7 +48,15 @@ def create_WALI():
   C = create_critic()
   wali = WALI(E, G, C)
   return wali
+def find_free_port():
+    """ https://stackoverflow.com/questions/1365265/on-localhost-how-do-i-pick-a-free-port-number """
+    import socket
+    from contextlib import closing
 
+    with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as s:
+        s.bind(('', 0))
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        return str(s.getsockname()[1])
 # Training pipeline function
 @click.command()
 @click.option('--model', type=str, help='Model filename', required=True)
@@ -60,6 +67,10 @@ def main(model, log, baseline):
   logging.basicConfig(filename=f'{log}.log', level=logging.DEBUG)
   logging.info('Start training')
   writer = SummaryWriter("runs/cifar10")
+
+  # setup port
+  master_port = find_free_port()
+  os.environ['MASTER_PORT'] = master_port 
 
   # DDP settings
   print("Start distributed init")
