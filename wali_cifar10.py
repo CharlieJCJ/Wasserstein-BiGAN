@@ -99,7 +99,7 @@ def main(model, log, baseline):
   curr_iter = C_iter = EG_iter = 0
   C_update, EG_update = True, False
   print('Training starts...')
-  torch.save(wali.model.module.state_dict(), f'cifar10/models/{model}-init.ckpt')
+  torch.save(wali.module.state_dict(), f'cifar10/models/{model}-init.ckpt')
   for curr_iter in range(ITER):
     for batch_idx, (x, _) in enumerate(train_loader, 1):
       running_losses = [0, 0]
@@ -184,7 +184,7 @@ def main(model, log, baseline):
 
       # save model
     if curr_iter % 5 == 0:
-      torch.save(wali.state_dict(), f'cifar10/models/{model}-epoch-{curr_iter}.ckpt')
+      torch.save(wali.module.state_dict(), f'cifar10/models/{model}-epoch-{curr_iter}.ckpt')
       print(f'Model saved to cifar10/models/{model}-epoch-{curr_iter}.ckpt')
       logging.info(f"Model saved to cifar10/models/{model}-epoch-{curr_iter}.ckpt")
     
