@@ -1,4 +1,6 @@
-
+"""
+This file stores all constants that are used across the project.
+"""
 # training hyperparameters
 N_VIEW = 2
 BATCH_SIZE = 16 # Original = 256, we start with something smaller

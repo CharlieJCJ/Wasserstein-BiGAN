@@ -13,7 +13,7 @@ from stylegan2 import Generator, Discriminator
 from torch.utils.tensorboard import SummaryWriter
 import logging
 import click
-# from constants import *
+from constants import *
 
 
 # training hyperparameters
@@ -30,7 +30,7 @@ DIM_D = 8192 # Need to check the size in stylegan2.py using test(); checked
 LEAK = 0.2
 
 DIM = 128
-C_ITERS = 5       # critic iterations
+C_ITERS = 1       # critic iterations
 EG_ITERS = 1      # encoder / generator iterations
 LAMBDA = 10       # strength of gradient penalty
 LEARNING_RATE = 1e-4
@@ -40,7 +40,6 @@ BETA2 = 0.9
 # dataset path
 CIFAR_PATH = r'~\torch\data\CIFAR10'
 
-WRITER_ITER = 10
 
 # Baseline setting
 baseline = True
