@@ -18,7 +18,7 @@ DIM = 128
 C_ITERS = 1       # critic iterations
 EG_ITERS = 1      # encoder / generator iterations
 LAMBDA = 10       # strength of gradient penalty
-LEARNING_RATE = 1e-5
+LEARNING_RATE = 1e-4
 BETA1 = 0.5
 BETA2 = 0.9
 
@@ -27,4 +27,7 @@ CIFAR_PATH = r'~\torch\data\CIFAR10'
 
 # logging frequency
 WRITER_ITER = 10
+
+# Baseline setting
+baseline = True
 

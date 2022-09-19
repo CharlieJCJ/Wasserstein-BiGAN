@@ -14,13 +14,14 @@ from torch.utils.tensorboard import SummaryWriter
 import logging
 import click
 from constants import *
-import os
+
+
 
 cudnn.benchmark = True
 torch.manual_seed(1)
 torch.cuda.manual_seed_all(1)
-os.environ['CUDA_VISIBLE_DEVICES']='2, 3, 4, 5' # two Titan + two 2080Ti
-# os.environ['MASTER_ADDR'] = '127.0.0.1'              
+
+
 def create_generator():
   return Generator(IMAGE_SIZE, H_DIM, 8)
 
@@ -48,56 +49,28 @@ def create_WALI():
   C = create_critic()
   wali = WALI(E, G, C)
   return wali
-def find_free_port():
-    """ https://stackoverflow.com/questions/1365265/on-localhost-how-do-i-pick-a-free-port-number """
-    import socket
-    from contextlib import closing
 
-    with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as s:
-        s.bind(('', 0))
-        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        return str(s.getsockname()[1])
 # Training pipeline function
 @click.command()
-@click.option('--model', type=str, help='Model filename', default = "baseline_actual")
-@click.option('--log', type=str, help='logName', default = "run5")
-@click.option('--baseline', type=bool, help='baseline', default = True)
-@click.option('--local_rank', type=int, default=0)
-def main(model, log, baseline, local_rank):
-  print("model: ", model, "log: ", log, "baseline: ", baseline)
+@click.option('--model', type=str, help='Model filename', required=True)
+@click.option('--log', type=str, help='logName', required=True)
+def main(model, log):
   logging.basicConfig(filename=f'{log}.log', level=logging.DEBUG)
   logging.info('Start training')
   writer = SummaryWriter("runs/cifar10")
 
-  # setup port
-  # master_port = find_free_port()
-  # os.environ['MASTER_PORT'] = master_port 
-
-  # os.environ["MASTER_ADDR"] = "127.0.0.1"
-  # os.environ["MASTER_PORT"] = "12355"
-
-  # print(master_port)
-  # DDP settings
-  print("Start distributed init")
-  torch.distributed.init_process_group(backend="nccl", rank = 0, world_size=4, init_method='tcp://127.0.0.1:12355')
-  print("Success distributed init")
-  # torch.cuda.set_device(local_rank)
-
   device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
   print('Device:', device)
   wali = create_WALI().to(device)
-  wali = torch.nn.parallel.DistributedDataParallel(wali, device_ids=[0, 1, 2, 3])
 
   # Load CIFAR10 dataset
   dataset = ContrastiveLearningDataset("./datasets")
   # Each have 2 views (2 views + original image)
   train_dataset = dataset.get_dataset("cifar10", N_VIEW)
-  train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset)
-
 
   train_loader = torch.utils.data.DataLoader(
       train_dataset, batch_size=BATCH_SIZE, shuffle=True,
-      num_workers=12, pin_memory=True, drop_last=True, sampler = train_sampler)
+      num_workers=12, pin_memory=True, drop_last=True)
   n_total_runs = len(train_loader)
   # FIXME - wali.get_encoder_parameters() might be the entire resnet + MLP. - FIXED
   optimizerEG = Adam(list(wali.get_encoder_parameters()) + list(wali.get_generator_parameters()), 
@@ -119,7 +92,7 @@ def main(model, log, baseline, local_rank):
   curr_iter = C_iter = EG_iter = 0
   C_update, EG_update = True, False
   print('Training starts...')
-  torch.save(wali.state_dict(), f'cifar10/models/{model}-init.ckpt')
+  torch.save(wali.state_dict(), f'cifar10/models/{model} init.ckpt')
   for curr_iter in range(ITER):
     for batch_idx, (x, _) in enumerate(train_loader, 1):
       running_losses = [0, 0]
@@ -145,7 +118,7 @@ def main(model, log, baseline, local_rank):
       # original_imgs.size(0) = batch size
       # x[2] is the original image TODO
       z = torch.randn(x[2].size(0), H_DIM, 1, 1).to(device)
-      C_loss, EG_loss = wali(x, z, lamb=LAMBDA, device=device, baseline=baseline)
+      C_loss, EG_loss = wali(x, z, lamb=LAMBDA, device=device)
       running_losses[0] += C_loss.item()
       running_losses[1] += EG_loss.item()
       # print("loss calculated C_loss: ", C_loss, "EG_loss: ",  EG_loss)
@@ -204,9 +177,9 @@ def main(model, log, baseline, local_rank):
 
       # save model
     if curr_iter % 5 == 0:
-      torch.save(wali.state_dict(), f'cifar10/models/{model}-epoch-{curr_iter}.ckpt')
-      print(f'Model saved to cifar10/models/{model}-epoch-{curr_iter}.ckpt')
-      logging.info(f"Model saved to cifar10/models/{model}-epoch-{curr_iter}.ckpt")
+      torch.save(wali.state_dict(), f'cifar10/models/{model} epoch {curr_iter}.ckpt')
+      print(f'Model saved to cifar10/models/{model} epoch {curr_iter}.ckpt')
+      logging.info(f"Model saved to cifar10/models/{model} epoch {curr_iter}.ckpt")
     
     # Outside of batch for loop ( simclr schedule updates)
     # if curr_iter >= 10:
