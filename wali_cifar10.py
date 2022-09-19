@@ -61,7 +61,7 @@ def main(model, log, baseline):
   writer = SummaryWriter("runs/cifar10")
 
   # DDP settings
-  torch.distributed.init_process_group(backend="nccl", world_size=4)
+  torch.distributed.init_process_group(backend="nccl", world_size=4, rank=0)
 
 
   device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
