@@ -139,7 +139,7 @@ def conv2d_gradfix(
 
             else:
                 out = F.conv_transpose2d(
-                    input=input,
+                    input=input.double(),
                     weight=weight,
                     bias=bias,
                     output_padding=output_padding,
