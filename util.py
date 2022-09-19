@@ -10,7 +10,6 @@ from torch.cuda.amp import GradScaler, autocast
 from resnet import ResNet50
 import numpy as np
 from constants import *
-BATCH_SIZE = 16 # Original = 256, we start with something smaller
 def log_odds(p):
   p = torch.clamp(p.mean(dim=0), 1e-7, 1-1e-7)
   return torch.log(p / (1 - p))
