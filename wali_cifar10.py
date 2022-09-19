@@ -126,20 +126,20 @@ def main(model, log, baseline):
       # x[2] is the original image TODO
       z = torch.randn(x[2].size(0), H_DIM, 1, 1).to(device)
       C_loss, EG_loss = wali(x, z, lamb=LAMBDA, device=device, baseline = baseline)
-      # running_losses[0] += C_loss.item()
-      # running_losses[1] += EG_loss.item()
+      running_losses[0] += C_loss.item()
+      running_losses[1] += EG_loss.item()
       # print("loss calculated C_loss: ", C_loss, "EG_loss: ",  EG_loss)
       if batch_idx % WRITER_ITER == 0:
         print('Epoch: {}, Batch: {} C_loss: {:.4f}, EG_loss: {:.4f}'.format(
           curr_iter, batch_idx, C_loss.item(), EG_loss.item()))
         # writer.add_scalar('C_loss', running_losses[0], (curr_iter - 1) * n_total_runs + batch_idx)
         # writer.add_scalar('EG_loss', running_losses[1], (curr_iter - 1) * n_total_runs + batch_idx)
-        # logging.info('C_loss: ' + str(running_losses[0]) + 'EG_loss: '+ str(running_losses[1]) + " epoch: " + str(curr_iter) + " batch"+ str((curr_iter) * n_total_runs + batch_idx))
+        logging.info('C_loss: ' + str(running_losses[0]) + 'EG_loss: '+ str(running_losses[1]) + " epoch: " + str(curr_iter) + " batch"+ str((curr_iter) * n_total_runs + batch_idx))
       # C_update: C_loss and Reconstruction loss
       if C_update:
         print("C_update")
         optimizerC.zero_grad()
-        C_loss.backward()
+        C_loss.sum().backward()
         # C_losses.append(C_loss.item())
         optimizerC.step()
 
@@ -155,7 +155,7 @@ def main(model, log, baseline):
       if EG_update:
         print("EG_update")
         optimizerEG.zero_grad()
-        EG_loss.backward()
+        EG_loss.sum().backward()
         # EG_losses.append(EG_loss.item())
         optimizerEG.step()
         EG_iter += 1
