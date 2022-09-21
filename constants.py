@@ -28,5 +28,5 @@ WRITER_ITER = 10
 # Baseline setting
 baseline = True
 
-CUDA_VISIBLE_DEVICES = '2,3,4,5'
-GPUS = 4
+CUDA_VISIBLE_DEVICES = '0, 1'
+GPUS = 2
