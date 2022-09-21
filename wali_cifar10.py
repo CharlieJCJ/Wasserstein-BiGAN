@@ -89,7 +89,7 @@ def main(model, log, baseline):
   # scalerSimCLR = GradScaler(enabled=True)
   # criterionSimCLR = torch.nn.CrossEntropyLoss().to(device)
   noise = torch.randn(64, NLAT, 1, 1, device=device)
-  wali = torch.nn.DataParallel(wali, device_ids=[4,5,6,7]).to(device)
+  wali = torch.nn.DataParallel(wali, device_ids=list(range(GPUS))).to(device)
   # Debugging purposes :down
   # test_size(train_loader)
   EG_losses, C_losses, R_losses, Constrastive_losses = [], [], [], []
