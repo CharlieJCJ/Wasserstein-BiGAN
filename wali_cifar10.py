@@ -16,7 +16,8 @@ import logging
 import click
 from constants import *
 import os
-
+os.environ['CUDA_VISIBLE_DEVICES'] = CUDA_VISIBLE_DEVICES
+print("GPUs: ", torch.cuda.device_count())
 WRITER_ITER = 10
 cudnn.benchmark = False
 torch.manual_seed(1)
@@ -57,7 +58,6 @@ def create_WALI():
 @click.option('--log', type=str, help='logName', required=True)
 @click.option('--baseline', type=bool, help='baseline', default= False)
 def main(model, log, baseline):
-  os.environ['CUDA_VISIBLE_DEVICES'] = CUDA_VISIBLE_DEVICES
   logging.basicConfig(filename=f'{log}.log', level=logging.DEBUG)
   logging.info('Start training')
   writer = SummaryWriter("runs/cifar10")
