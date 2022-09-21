@@ -16,15 +16,11 @@ import logging
 import click
 from constants import *
 import os
-os.environ['CUDA_VISIBLE_DEVICES']='2, 3, 4, 5'
-
-
 
 WRITER_ITER = 10
 cudnn.benchmark = False
 torch.manual_seed(1)
 torch.cuda.manual_seed_all(1)
-cudnn.deterministic = True
 
 def create_generator():
   return Generator(IMAGE_SIZE, H_DIM, 8)
@@ -61,6 +57,7 @@ def create_WALI():
 @click.option('--log', type=str, help='logName', required=True)
 @click.option('--baseline', type=bool, help='baseline', default= False)
 def main(model, log, baseline):
+  os.environ['CUDA_VISIBLE_DEVICES'] = CUDA_VISIBLE_DEVICES
   logging.basicConfig(filename=f'{log}.log', level=logging.DEBUG)
   logging.info('Start training')
   writer = SummaryWriter("runs/cifar10")
@@ -92,7 +89,7 @@ def main(model, log, baseline):
   # scalerSimCLR = GradScaler(enabled=True)
   # criterionSimCLR = torch.nn.CrossEntropyLoss().to(device)
   noise = torch.randn(64, NLAT, 1, 1, device=device)
-  wali = torch.nn.DataParallel(wali, device_ids=[0, 1, 2, 3]).to(device)
+  wali = torch.nn.DataParallel(wali, device_ids=list(range(GPUS))).to(device)
   # Debugging purposes :down
   # test_size(train_loader)
   EG_losses, C_losses, R_losses, Constrastive_losses = [], [], [], []
