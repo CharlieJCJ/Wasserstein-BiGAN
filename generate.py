@@ -137,7 +137,7 @@ import numpy as np
 import PIL
 import re
 from typing import List, Optional
-from torchsummary import summary
+# from torchsummary import summary
 import os
 def num_range(s: str) -> List[int]:
     '''Accept either a comma separated list of numbers 'a,b,c' or a range 'a-c' and return as a list of ints.'''
