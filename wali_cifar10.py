@@ -16,7 +16,7 @@ import logging
 import click
 # from constants import *
 import os
-os.environ['CUDA_VISIBLE_DEVICES'] = "0, 1, 2, 3"
+# os.environ['CUDA_VISIBLE_DEVICES'] = "0, 1, 2, 3"
 WRITER_ITER = 10
 cudnn.benchmark = False
 torch.manual_seed(1)
