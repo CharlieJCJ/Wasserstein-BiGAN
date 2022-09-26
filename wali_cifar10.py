@@ -68,6 +68,7 @@ def main(model,
   print("GPUs: ", torch.cuda.device_count())
   Parallel_Index = [int(item) for item in CUDA_VISIBLE_DEVICES.split(',') if item.isdigit()]
   GPUS = len(Parallel_Index)
+  print("GPUs used in training: ", GPUS)
   # Extra dataset dependent hyperparameters
   if DATASET == 'cifar10':
     IMAGE_SIZE = 32
