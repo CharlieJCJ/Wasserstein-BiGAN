@@ -63,12 +63,13 @@ def main(model,
          dataset, 
          cuda_visible_devices):
   MODEL,LOG,BASELINE, N_VIEW, BATCH_SIZE, ITER,  H_DIM, Z_DIM, NLAT, LEAK,C_ITERS, EG_ITERS, LAMBDAS, LEARNING_RATE, BETA1, BETA2, VISUAL_NUM, DATASET, CUDA_VISIBLE_DEVICES = model,log,baseline, n_view, batch_size, iter, h_dim, z_dim,nlat,leak,c_iters,eg_iters,lambdas,learning_rate,beta1,beta2,visual_num,dataset,cuda_visible_devices
-  BATCH_SIZE = BATCH_SIZE * GPUS # batch size for each GPU, total batch size is BATCH_SIZE * GPUS
   os.environ['CUDA_VISIBLE_DEVICES'] = CUDA_VISIBLE_DEVICES
   print("GPUs: ", torch.cuda.device_count())
   Parallel_Index = [int(item) for item in CUDA_VISIBLE_DEVICES.split(',') if item.isdigit()]
   GPUS = len(Parallel_Index)
   print("GPUs used in training: ", GPUS)
+  BATCH_SIZE = BATCH_SIZE * GPUS # batch size for each GPU, total batch size is BATCH_SIZE * GPUS
+
   # Extra dataset dependent hyperparameters
   if DATASET == 'cifar10':
     IMAGE_SIZE = 32
