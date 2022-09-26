@@ -69,7 +69,7 @@ def main(model,
   Parallel_Index = [int(item) for item in CUDA_VISIBLE_DEVICES.split(',') if item.isdigit()]
   GPUS = len(Parallel_Index)
   print("GPUs used in training: ", GPUS)
-  BATCH_SIZE = BATCH_SIZE * GPUS # batch size for each GPU, total batch size is BATCH_SIZE * GPUS
+  BATCH_SIZE = BATCH_SIZE # batch size for each GPU, total batch size is BATCH_SIZE * GPUS
 
   # Extra dataset dependent hyperparameters
   if DATASET == 'cifar10':
