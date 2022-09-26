@@ -640,6 +640,7 @@ class Discriminator(nn.Module):
             4: 512,
             8: 512,
             16: 512,
+            28: 512,
             32: 512,
             64: 256 * channel_multiplier,
             128: 128 * channel_multiplier,
