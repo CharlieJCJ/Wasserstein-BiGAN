@@ -69,7 +69,7 @@ def main(model,
   Parallel_Index = [int(item) for item in CUDA_VISIBLE_DEVICES.split(',') if item.isdigit()]
   GPUS = len(Parallel_Index)
   print("GPUs used in training: ", GPUS)
-  BATCH_SIZE = BATCH_SIZE # batch size for each GPU, total batch size is BATCH_SIZE * GPUS
+  BATCH_SIZE = BATCH_SIZE * GPUS# batch size for each GPU, total batch size is BATCH_SIZE * GPUS
 
   # Extra dataset dependent hyperparameters
   if DATASET == 'cifar10':
@@ -77,6 +77,7 @@ def main(model,
     NUM_CHANNELS = 3
     DIM_D = 8192        # Need to check the size in stylegan2.py using test(); checked
   elif DATASET == 'mnist':
+    print("Using MNIST")
     IMAGE_SIZE = 28
     NUM_CHANNELS = 1
     DIM_D = 8192
