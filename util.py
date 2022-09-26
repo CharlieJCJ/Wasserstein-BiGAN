@@ -339,7 +339,13 @@ class ContrastiveLearningDataset:
                                                           transform=ContrastiveLearningViewGenerator(
                                                               self.get_simclr_pipeline_transform(96),
                                                               n_views),
-                                                          download=True)}
+                                                          download=True), 
+                          'mnist': lambda: datasets.MNIST(self.root_folder, train=True,
+                                                              transform=ContrastiveLearningViewGenerator(
+                                                                  self.get_simclr_pipeline_transform(28),
+                                                                  n_views),
+                                                              download=True)                                
+                                                          }
 
         try:
             dataset_fn = valid_datasets[name]
