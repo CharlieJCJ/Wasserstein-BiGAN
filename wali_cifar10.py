@@ -57,7 +57,23 @@ def create_WALI():
 @click.option('--model', type=str, help='Model filename', required=True)
 @click.option('--log', type=str, help='logName', required=True)
 @click.option('--baseline', type=bool, help='baseline', default= False)
-def main(model, log, baseline):
+@click.option('--GPUS', type=int, help='Number GPUs', default=1)
+@click.option('--N_VIEW', type=int, help='Number of views', default=2)
+@click.option('--BATCH_SIZE', type=int, help='Batch size', default=16)
+@click.option('--ITER', type=int, help='Number of epochs to train for', default=200000)
+@click.option('--H_DIM', type=int, help='Hidden dimension', default=512)
+@click.option('--Z_DIM', type=int, help='Latent dimension', default=128)
+@click.option('--NLAT', type=int, help='NLAT', default=512)
+@click.option('--LEAK', type=float, help='Leak', default=0.2)
+@click.option('--C_ITERS', type=int, help='Critic iterations', default=1)
+@click.option('--EG_ITERS', type=int, help='Encoder / generator iterations', default=1)
+@click.option('--LAMBDA', type=int, help='Strength of gradient penalty', default=10)
+@click.option('--LEARNING_RATE', type=float, help='Learning rate', default=1e-5)
+@click.option('--BETA1', type=float, help='BETA1', default=0.5)
+@click.option('--BETA2', type=float, help='BETA2', default=0.999)
+def main(model, log, baseline, GPUS, N_VIEW, BATCH_SIZE, 
+          ITER, H_DIM, Z_DIM, NLAT, LEAK, C_ITERS, EG_ITERS, LAMBDA, 
+          LEARNING_RATE, BETA1, BETA2):
   logging.basicConfig(filename=f'{log}.log', level=logging.DEBUG)
   logging.info('Start training')
   writer = SummaryWriter("runs/cifar10")
