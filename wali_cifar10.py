@@ -68,7 +68,7 @@ def main(model,
   BATCH_SIZE = BATCH_SIZE * GPUS # batch size for each GPU, total batch size is BATCH_SIZE * GPUS
   os.environ['CUDA_VISIBLE_DEVICES'] = CUDA_VISIBLE_DEVICES
   print("GPUs: ", torch.cuda.device_count())
-  
+  Parallel_Index = [int(item) for item in CUDA_VISIBLE_DEVICES.split(',') if item.isdigit()]
   # Extra dataset dependent hyperparameters
   if DATASET == 'cifar10':
     IMAGE_SIZE = 32
@@ -112,7 +112,7 @@ def main(model,
   # scalerSimCLR = GradScaler(enabled=True)
   # criterionSimCLR = torch.nn.CrossEntropyLoss().to(device)
   noise = torch.randn(VISUAL_NUM, NLAT, 1, 1, device=device)
-  wali = torch.nn.DataParallel(wali, device_ids=list(range(GPUS))).to(device)
+  wali = torch.nn.DataParallel(wali, device_ids=Parallel_Index.to(device)
   # Debugging purposes :down
   # test_size(train_loader)
   EG_losses, C_losses, R_losses, Constrastive_losses = [], [], [], []
