@@ -381,9 +381,13 @@ class ContrastiveLearningViewGenerator(object):
         self.n_views = n_views
 
     def __call__(self, x):
+        # transform = transforms.Compose([
+        #     transforms.ToTensor(),
+        #     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+
         transform = transforms.Compose([
-            transforms.ToTensor(),
-            transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+          transforms.ToTensor(),
+          transforms.Normalize((0.5, 0.5))])
         # print("My length is", len([self.base_transform(x) for i in range(self.n_views)] + [transform(x)]))
         # return [self.base_transform(x) for i in range(self.n_views)]
         return self.base_transform(x), self.base_transform(x), transform(x) # dataloader handles the rest
