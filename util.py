@@ -393,7 +393,7 @@ class ContrastiveLearningViewGenerator(object):
           transforms.Normalize((0.5,0.5,0.5),(0.5,0.5,0.5))])
         # print("My length is", len([self.base_transform(x) for i in range(self.n_views)] + [transform(x)]))
         # return [self.base_transform(x) for i in range(self.n_views)]
-        x = self.base_transform(x), 
+        x = self.base_transform(x)
         y, z = self.base_transform(x), transform(x)
         print(x.shape, y.shape, z.shape)
         return x, y, z # dataloader handles the rest
