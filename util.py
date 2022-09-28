@@ -322,7 +322,6 @@ class ContrastiveLearningDataset:
         color_jitter = transforms.ColorJitter(0.8 * s, 0.8 * s, 0.8 * s, 0.2 * s)
         if flag_resize:
           data_transforms = transforms.Compose([transforms.Resize(size=size),
-                                                transforms.Lambda(lambda x: x.repeat(3, 1, 1)),
                                                 transforms.RandomResizedCrop(size=size),
                                                 transforms.RandomHorizontalFlip(),
                                                 transforms.RandomApply([color_jitter], p=0.8),
@@ -385,10 +384,9 @@ class ContrastiveLearningViewGenerator(object):
         # transform = transforms.Compose([
         #     transforms.ToTensor(),
         #     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
-        print(len(x))
+        img = x.convert('RGB')
         transform = transforms.Compose([
           transforms.Resize(size=32),
-          transforms.Lambda(lambda x: x.repeat(3, 1, 1)),
           transforms.ToTensor(),
           transforms.Normalize((0.5,0.5,0.5),(0.5,0.5,0.5))])
         # print("My length is", len([self.base_transform(x) for i in range(self.n_views)] + [transform(x)]))
