@@ -80,7 +80,7 @@ def main(model,
   elif DATASET == 'mnist':
     print("Using MNIST")
     IMAGE_SIZE = 32
-    NUM_CHANNELS = 1
+    NUM_CHANNELS = 3
     DIM_D = 8192
   else:   # default
     IMAGE_SIZE = 32
