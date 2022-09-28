@@ -390,7 +390,7 @@ class ContrastiveLearningViewGenerator(object):
           transforms.Resize(size=32),
           transforms.Lambda(lambda x: x.repeat(3, 1, 1)),
           transforms.ToTensor(),
-          transforms.Normalize((0.5),(0.5))])
+          transforms.Normalize((0.5,0.5,0.5),(0.5,0.5,0.5))])
         # print("My length is", len([self.base_transform(x) for i in range(self.n_views)] + [transform(x)]))
         # return [self.base_transform(x) for i in range(self.n_views)]
         x, y, z = self.base_transform(x), self.base_transform(x), transform(x)
