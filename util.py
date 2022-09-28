@@ -393,10 +393,10 @@ class ContrastiveLearningViewGenerator(object):
           transforms.Normalize((0.5,0.5,0.5),(0.5,0.5,0.5))])
         # print("My length is", len([self.base_transform(x) for i in range(self.n_views)] + [transform(x)]))
         # return [self.base_transform(x) for i in range(self.n_views)]
-        x = self.base_transform(x)
-        y, z = self.base_transform(x), transform(x)
-        print(x.shape, y.shape, z.shape)
-        return x, y, z # dataloader handles the rest
+        a = self.base_transform(x)
+        b, c = self.base_transform(x), transform(x)
+        print("a", a.shape, "b", b.shape, "c", c.shape)
+        return a, b, c # dataloader handles the rest
 
 
 class GaussianBlur(object):
