@@ -81,7 +81,7 @@ def main(model,
     print("Using MNIST")
     IMAGE_SIZE = 32
     NUM_CHANNELS = 3
-    DIM_D = 8192
+    DIM_D = 8192 
   else:   # default
     IMAGE_SIZE = 32
     NUM_CHANNELS = 3
@@ -205,25 +205,25 @@ def main(model,
       print(f'Model saved to cifar10/models/{MODEL}-epoch-{curr_iter}.ckpt')
       logging.info(f"Model saved to cifar10/models/{MODEL}-epoch-{curr_iter}.ckpt")
 
-      # plot training loss curve
-      plt.figure(figsize=(10, 5))
-      plt.title('Training loss curve')
-      plt.plot(EG_losses, label='Encoder + Generator')
-      plt.plot(C_losses, label='Critic')
-      plt.xlabel('Iterations')
-      plt.ylabel('Loss')
-      plt.legend()
-      plt.savefig('cifar10/loss_curve.png')
+      # # plot training loss curve
+      # plt.figure(figsize=(10, 5))
+      # plt.title('Training loss curve')
+      # plt.plot(EG_losses, label='Encoder + Generator')
+      # plt.plot(C_losses, label='Critic')
+      # plt.xlabel('Iterations')
+      # plt.ylabel('Loss')
+      # plt.legend()
+      # plt.savefig('cifar10/loss_curve.png')
 
-      # plot reconstructed images and samples
-      wali.eval()
-      real_x, rect_x = init_x[:VISUAL_NUM], wali.reconstruct(init_x[:VISUAL_NUM]).detach_()
-      rect_imgs = torch.cat((real_x.unsqueeze(1), rect_x.unsqueeze(1)), dim=1) 
-      rect_imgs = rect_imgs.view(VISUAL_NUM * 2, NUM_CHANNELS, IMAGE_SIZE, IMAGE_SIZE).cpu()
-      genr_imgs = wali.generate(noise).detach_().cpu()
-      utils.save_image(rect_imgs * 0.5 + 0.5, 'cifar10/rect%d.png' % curr_iter)
-      utils.save_image(genr_imgs * 0.5 + 0.5, 'cifar10/genr%d.png' % curr_iter)
-      wali.train()
+      # # plot reconstructed images and samples
+      # wali.eval()
+      # real_x, rect_x = init_x[:VISUAL_NUM], wali.reconstruct(init_x[:VISUAL_NUM]).detach_()
+      # rect_imgs = torch.cat((real_x.unsqueeze(1), rect_x.unsqueeze(1)), dim=1) 
+      # rect_imgs = rect_imgs.view(VISUAL_NUM * 2, NUM_CHANNELS, IMAGE_SIZE, IMAGE_SIZE).cpu()
+      # genr_imgs = wali.generate(noise).detach_().cpu()
+      # utils.save_image(rect_imgs * 0.5 + 0.5, 'cifar10/rect%d.png' % curr_iter)
+      # utils.save_image(genr_imgs * 0.5 + 0.5, 'cifar10/genr%d.png' % curr_iter)
+      # wali.train()
     # Outside of batch for loop ( simclr schedule updates)
     # if curr_iter >= 10:
     #     schedulerSimCLR.step()
