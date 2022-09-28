@@ -143,7 +143,8 @@ def main(model,
       if curr_iter == 0:
         init_x = original_imgs
         curr_iter += 1
-      
+        os.makedirs("MNIST", exist_ok=True)
+        utils.save_image(init_x * 0.5 + 0.5, f'MNIST/init-{MODEL}.png')
       # Forward pass, get loss
       # Sample h from a prior distribution ~ N(0, 1)
       # original_imgs.size(0) = batch size
