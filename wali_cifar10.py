@@ -90,7 +90,7 @@ def main(model,
   logging.info('Start training')
   # writer = SummaryWriter("runs/cifar10")
 
-  device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+  device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
   print('Device:', device)
   wali = create_WALI(H_DIM, Z_DIM, LEAK, DIM_D, IMAGE_SIZE).to(device)
   
