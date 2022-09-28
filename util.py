@@ -322,12 +322,11 @@ class ContrastiveLearningDataset:
         color_jitter = transforms.ColorJitter(0.8 * s, 0.8 * s, 0.8 * s, 0.2 * s)
         if flag_resize:
           data_transforms = transforms.Compose([transforms.Resize(size=size),
-                                                transforms.Lambda(lambda x: x.repeat(3, 1, 1) ),
+                                                transforms.Lambda(lambda x: x.repeat(3, 1, 1)),
                                                 transforms.RandomResizedCrop(size=size),
                                                 transforms.RandomHorizontalFlip(),
                                                 transforms.RandomApply([color_jitter], p=0.8),
                                                 transforms.RandomGrayscale(p=0.2),
-                                                GaussianBlur(kernel_size=int(0.1 * size)),
                                                 transforms.ToTensor()])
         else:
           data_transforms = transforms.Compose([transforms.RandomResizedCrop(size=size),
