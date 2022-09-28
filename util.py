@@ -387,6 +387,8 @@ class ContrastiveLearningViewGenerator(object):
         #     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 
         transform = transforms.Compose([
+          transforms.Resize(size=32),
+          transforms.Lambda(lambda x: x.repeat(3, 1, 1)),
           transforms.ToTensor(),
           transforms.Normalize((0.5),(0.5))])
         # print("My length is", len([self.base_transform(x) for i in range(self.n_views)] + [transform(x)]))
