@@ -18,10 +18,10 @@ import click
 import os
 os.environ['CUDA_VISIBLE_DEVICES'] = "2, 3, 4, 5"
 WRITER_ITER = 10
-cudnn.benchmark = False
+# cudnn.benchmark = False
 torch.manual_seed(1)
 torch.cuda.manual_seed_all(1)
-cudnn.deterministic = True
+# cudnn.deterministic = True
 
 
 # Training pipeline function
