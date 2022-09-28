@@ -79,7 +79,7 @@ def main(model,
     DIM_D = 8192        # Need to check the size in stylegan2.py using test(); checked
   elif DATASET == 'mnist':
     print("Using MNIST")
-    IMAGE_SIZE = 28
+    IMAGE_SIZE = 32
     NUM_CHANNELS = 1
     DIM_D = 8192
   else:   # default

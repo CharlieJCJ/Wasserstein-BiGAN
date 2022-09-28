@@ -317,15 +317,24 @@ class ContrastiveLearningDataset:
         self.root_folder = root_folder
 
     @staticmethod
-    def get_simclr_pipeline_transform(size, s=1):
+    def get_simclr_pipeline_transform(size, s=1, flag_resize = False):
         """Return a set of data augmentation transformations as described in the SimCLR paper."""
         color_jitter = transforms.ColorJitter(0.8 * s, 0.8 * s, 0.8 * s, 0.2 * s)
-        data_transforms = transforms.Compose([transforms.RandomResizedCrop(size=size),
-                                              transforms.RandomHorizontalFlip(),
-                                              transforms.RandomApply([color_jitter], p=0.8),
-                                              transforms.RandomGrayscale(p=0.2),
-                                              GaussianBlur(kernel_size=int(0.1 * size)),
-                                              transforms.ToTensor()])
+        if flag_resize:
+          data_transforms = transforms.Compose([transforms.Resize(size=size),
+                                                transforms.RandomResizedCrop(size=size),
+                                                transforms.RandomHorizontalFlip(),
+                                                transforms.RandomApply([color_jitter], p=0.8),
+                                                transforms.RandomGrayscale(p=0.2),
+                                                GaussianBlur(kernel_size=int(0.1 * size)),
+                                                transforms.ToTensor()])
+        else:
+          data_transforms = transforms.Compose([transforms.RandomResizedCrop(size=size),
+                                                transforms.RandomHorizontalFlip(),
+                                                transforms.RandomApply([color_jitter], p=0.8),
+                                                transforms.RandomGrayscale(p=0.2),
+                                                GaussianBlur(kernel_size=int(0.1 * size)),
+                                                transforms.ToTensor()])
         return data_transforms
 
     def get_dataset(self, name, n_views):
@@ -342,7 +351,7 @@ class ContrastiveLearningDataset:
                                                           download=True), 
                           'mnist': lambda: datasets.MNIST(self.root_folder, train=True,
                                                               transform=ContrastiveLearningViewGenerator(
-                                                                  self.get_simclr_pipeline_transform(28),
+                                                                  self.get_simclr_pipeline_transform(32, flag_resize),
                                                                   n_views),
                                                               download=True)                                
                                                           }
