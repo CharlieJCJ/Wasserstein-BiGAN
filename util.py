@@ -385,7 +385,7 @@ class ContrastiveLearningViewGenerator(object):
         # transform = transforms.Compose([
         #     transforms.ToTensor(),
         #     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
-
+        print("x shape", x.shape)
         transform = transforms.Compose([
           transforms.Resize(size=32),
           transforms.Lambda(lambda x: x.repeat(3, 1, 1)),
