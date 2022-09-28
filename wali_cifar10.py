@@ -126,7 +126,6 @@ def main(model,
   torch.save(wali.module.state_dict(), f'cifar10/models/{MODEL}-init.ckpt')
   for curr_iter in range(ITER):
     for batch_idx, (x, _) in enumerate(train_loader, 1):
-      print("x shape: ", x.shape)
       running_losses = [0, 0]
       # print("batch_idx: ", batch_idx)
 

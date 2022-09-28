@@ -394,7 +394,7 @@ class ContrastiveLearningViewGenerator(object):
         # return [self.base_transform(x) for i in range(self.n_views)]
         a = self.base_transform(x)
         b, c = self.base_transform(x), transform(x)
-        print("a", a.shape, "b", b.shape, "c", c.shape)
+        # print("a", a.shape, "b", b.shape, "c", c.shape)
         return a, b, c # dataloader handles the rest
 
 
