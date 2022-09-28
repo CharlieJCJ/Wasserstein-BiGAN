@@ -327,6 +327,7 @@ class ContrastiveLearningDataset:
                                                 transforms.RandomHorizontalFlip(),
                                                 transforms.RandomApply([color_jitter], p=0.8),
                                                 transforms.RandomGrayscale(p=0.2),
+                                                GaussianBlur(kernel_size=int(0.1 * size)),
                                                 transforms.ToTensor()])
         else:
           data_transforms = transforms.Compose([transforms.RandomResizedCrop(size=size),
@@ -351,7 +352,7 @@ class ContrastiveLearningDataset:
                                                           download=True), 
                           'mnist': lambda: datasets.MNIST(self.root_folder, train=True,
                                                               transform=ContrastiveLearningViewGenerator(
-                                                                  self.get_simclr_pipeline_transform(32, True),
+                                                                  self.get_simclr_pipeline_transform(32, flag_resize = True),
                                                                   n_views),
                                                               download=True)                                
                                                           }
