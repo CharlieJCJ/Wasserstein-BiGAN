@@ -16,7 +16,7 @@ import logging
 import click
 # from constants import *
 import os
-os.environ['CUDA_VISIBLE_DEVICES'] = "2, 3, 4, 5"
+# os.environ['CUDA_VISIBLE_DEVICES'] = "2, 3, 4, 5"
 WRITER_ITER = 10
 # cudnn.benchmark = False
 torch.manual_seed(1)
@@ -116,7 +116,7 @@ def main(model,
   # scalerSimCLR = GradScaler(enabled=True)
   # criterionSimCLR = torch.nn.CrossEntropyLoss().to(device)
   noise = torch.randn(VISUAL_NUM, NLAT, 1, 1, device=device)
-  wali = torch.nn.DataParallel(wali, device_ids=[2,3,4,5]).to(device)
+  wali = torch.nn.DataParallel(wali, device_ids=list(range(GPUS))).to(device)
   # Debugging purposes :down
   # test_size(train_loader)
   EG_losses, C_losses, R_losses, Constrastive_losses = [], [], [], []
