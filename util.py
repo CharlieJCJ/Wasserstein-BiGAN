@@ -384,7 +384,8 @@ class ContrastiveLearningViewGenerator(object):
         # transform = transforms.Compose([
         #     transforms.ToTensor(),
         #     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
-        img = x.convert('RGB')
+        x = x.convert('RGB')
+        
         transform = transforms.Compose([
           transforms.Resize(size=32),
           transforms.ToTensor(),
