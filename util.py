@@ -351,7 +351,7 @@ class ContrastiveLearningDataset:
                                                           download=True), 
                           'mnist': lambda: datasets.MNIST(self.root_folder, train=True,
                                                               transform=ContrastiveLearningViewGenerator(
-                                                                  self.get_simclr_pipeline_transform(32, flag_resize),
+                                                                  self.get_simclr_pipeline_transform(32, True),
                                                                   n_views),
                                                               download=True)                                
                                                           }
