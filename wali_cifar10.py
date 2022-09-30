@@ -206,8 +206,8 @@ def main(model,
       # plot training loss curve
       plt.figure(figsize=(10, 5))
       plt.title('Training loss curve')
-      plt.plot(EG_losses.cpu(), label='Encoder + Generator')
-      plt.plot(C_losses.cpu(), label='Critic')
+      plt.plot(EG_losses, label='Encoder + Generator')
+      plt.plot(C_losses, label='Critic')
       plt.xlabel('Iterations')
       plt.ylabel('Loss')
       plt.legend()
