@@ -210,6 +210,7 @@ def main(model,
       #     % (curr_iter, ITER, EG_loss.item(), C_loss.item()))
 
       # plot training loss curve
+      print(EG_losses, C_losses)
       plt.figure(figsize=(10, 5))
       plt.title('Training loss curve')
       plt.plot(EG_losses, label='Encoder + Generator')
@@ -231,7 +232,8 @@ def main(model,
       print("rect, gen images saved")
 
       # save model
-    if curr_iter % MODELSAVE_ITER == 0:
+    # if curr_iter % MODELSAVE_ITER == 0:
+    if True:
       torch.save(wali.module.state_dict(), f'{modeldir}/{MODEL}-epoch-{curr_iter}.ckpt')
       print(f'Model saved to {modeldir}/{MODEL}-epoch-{curr_iter}.ckpt')
       logging.info(f"Model saved to {modeldir}/{MODEL}-epoch-{curr_iter}.ckpt")
