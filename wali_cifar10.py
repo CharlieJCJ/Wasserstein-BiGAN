@@ -99,7 +99,7 @@ def main(model,
     IMAGE_SIZE = 32
     NUM_CHANNELS = 3
     DIM_D = 8192        # Need to check the size in stylegan2.py using test(); checked
-  logging.basicConfig(filename=f'{LOG}.log', level=logging.DEBUG)
+  logging.basicConfig(filename=f'{traindir}/{LOG}.log', level=logging.DEBUG)
   logging.info('Start training')
   # writer = SummaryWriter("runs/cifar10")
 
