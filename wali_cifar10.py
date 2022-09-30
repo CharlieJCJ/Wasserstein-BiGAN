@@ -68,6 +68,7 @@ def main(model,
   MODEL,LOG,BASELINE, N_VIEW, BATCH_SIZE, ITER,  H_DIM, Z_DIM, NLAT, LEAK,C_ITERS, EG_ITERS, LAMBDAS, LEARNING_RATE, BETA1, BETA2, VISUAL_NUM, DATASET, CUDA_VISIBLE_DEVICES = model,log,baseline, n_view, batch_size, iter, h_dim, z_dim,nlat,leak,c_iters,eg_iters,lambdas,learning_rate,beta1,beta2,visual_num,dataset,cuda_visible_devices
   # os.environ['CUDA_VISIBLE_DEVICES'] = CUDA_VISIBLE_DEVICES
   os.makedirs(DATASET, exist_ok=True)
+  os.makedirs(f"{DATASET}/models", exist_ok=True)
 
   print("GPUs: ", torch.cuda.device_count())
   Parallel_Index = [int(item) for item in CUDA_VISIBLE_DEVICES.split(',') if item.isdigit()]
