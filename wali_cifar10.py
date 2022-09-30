@@ -71,6 +71,7 @@ def main(model,
          cuda_visible_devices):
   MODEL,LOG,BASELINE, N_VIEW, BATCH_SIZE, ITER,  H_DIM, Z_DIM, NLAT, LEAK,C_ITERS, EG_ITERS, LAMBDAS, LEARNING_RATE, BETA1, BETA2, VISUAL_NUM, DATASET, CUDA_VISIBLE_DEVICES = model,log,baseline, n_view, batch_size, iter, h_dim, z_dim,nlat,leak,c_iters,eg_iters,lambdas,learning_rate,beta1,beta2,visual_num,dataset,cuda_visible_devices
   # os.environ['CUDA_VISIBLE_DEVICES'] = CUDA_VISIBLE_DEVICES
+  originalBATCH = BATCH_SIZE
   traindir = f"train/{DATASET}-{datetime_object}"
   modeldir = f"{traindir}/models"
   os.makedirs(traindir, exist_ok=True)
@@ -127,7 +128,7 @@ def main(model,
   #                                                          last_epoch=-1)
   # scalerSimCLR = GradScaler(enabled=True)
   # criterionSimCLR = torch.nn.CrossEntropyLoss().to(device)
-  noise = torch.randn(VISUAL_NUM, NLAT, 1, 1, device=device)
+  noise = torch.randn(originalBATCH, NLAT, 1, 1, device=device)
   wali = torch.nn.DataParallel(wali, device_ids=list(range(GPUS))).to(device)
   # Debugging purposes :down
   # test_size(train_loader)
@@ -222,9 +223,9 @@ def main(model,
       print("loss curve saved")
       # plot reconstructed images and samples
       wali.eval()
-      real_x, rect_x = init_x[:VISUAL_NUM], wali.module.reconstruct(init_x[:VISUAL_NUM]).detach_()
+      real_x, rect_x = init_x[:originalBATCH], wali.module.reconstruct(init_x[:originalBATCH]).detach_()
       rect_imgs = torch.cat((real_x.unsqueeze(1), rect_x.unsqueeze(1)), dim=1) 
-      rect_imgs = rect_imgs.view(VISUAL_NUM * 2, NUM_CHANNELS, IMAGE_SIZE, IMAGE_SIZE).cpu()
+      rect_imgs = rect_imgs.view(originalBATCH * 2, NUM_CHANNELS, IMAGE_SIZE, IMAGE_SIZE).cpu()
       genr_imgs = wali.module.generate(noise).detach_().cpu()
       utils.save_image(rect_imgs * 0.5 + 0.5, f'{traindir}/rect{curr_iter}-{batch_idx}.png')
       utils.save_image(genr_imgs * 0.5 + 0.5, f'{traindir}/genr{curr_iter}-{batch_idx}.png')
