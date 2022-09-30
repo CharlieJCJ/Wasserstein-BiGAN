@@ -72,7 +72,7 @@ def main(model,
   MODEL,LOG,BASELINE, N_VIEW, BATCH_SIZE, ITER,  H_DIM, Z_DIM, NLAT, LEAK,C_ITERS, EG_ITERS, LAMBDAS, LEARNING_RATE, BETA1, BETA2, VISUAL_NUM, DATASET, CUDA_VISIBLE_DEVICES = model,log,baseline, n_view, batch_size, iter, h_dim, z_dim,nlat,leak,c_iters,eg_iters,lambdas,learning_rate,beta1,beta2,visual_num,dataset,cuda_visible_devices
   # os.environ['CUDA_VISIBLE_DEVICES'] = CUDA_VISIBLE_DEVICES
   traindir = f"train/{DATASET}-{datetime_object}"
-  modeldir = f"{modeldir}/models"
+  modeldir = f"{traindir}/models"
   os.makedirs(traindir, exist_ok=True)
   os.makedirs(modeldir, exist_ok=True)
 
