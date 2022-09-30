@@ -178,7 +178,7 @@ class WALI(nn.Module):
 
   def reconstruct(self, x):
     h, z = self.encode(x)
-    output = self.generate(h)
+    output = self.generate([h])
     print("h", h.shape, "z", z.shape, "output", output.shape)
     return output
 
