@@ -222,10 +222,10 @@ def main(model,
       print("loss curve saved")
       # plot reconstructed images and samples
       wali.eval()
-      real_x, rect_x = init_x[:VISUAL_NUM], wali.reconstruct(init_x[:VISUAL_NUM]).detach_()
+      real_x, rect_x = init_x[:VISUAL_NUM], wali.module.reconstruct(init_x[:VISUAL_NUM]).detach_()
       rect_imgs = torch.cat((real_x.unsqueeze(1), rect_x.unsqueeze(1)), dim=1) 
       rect_imgs = rect_imgs.view(VISUAL_NUM * 2, NUM_CHANNELS, IMAGE_SIZE, IMAGE_SIZE).cpu()
-      genr_imgs = wali.generate(noise).detach_().cpu()
+      genr_imgs = wali.module.generate(noise).detach_().cpu()
       utils.save_image(rect_imgs * 0.5 + 0.5, f'{traindir}/rect{curr_iter}-{batch_idx}.png')
       utils.save_image(genr_imgs * 0.5 + 0.5, f'{traindir}/genr{curr_iter}-{batch_idx}.png')
       wali.train()
