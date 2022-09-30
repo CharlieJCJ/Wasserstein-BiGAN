@@ -45,6 +45,7 @@ torch.cuda.manual_seed_all(1)
 @click.option('--VISUAL_NUM', type=int, help='VISUAL_NUM', default=8)
 @click.option('--DATASET', help='Dataset name', type=click.Choice(['cifar10', 'mnist', 'celeba']), default='cifar10', show_default=True)
 @click.option('--CUDA_VISIBLE_DEVICES', help='CUDA_VISIBLE_DEVICES', type=str, default='0', show_default=True)
+# @click.option('--LOCAL', help='Local Computer with small GPU memory', type=bool, default=False, show_default=True)
 def main(model, 
          log, 
          baseline, 
@@ -66,12 +67,15 @@ def main(model,
          cuda_visible_devices):
   MODEL,LOG,BASELINE, N_VIEW, BATCH_SIZE, ITER,  H_DIM, Z_DIM, NLAT, LEAK,C_ITERS, EG_ITERS, LAMBDAS, LEARNING_RATE, BETA1, BETA2, VISUAL_NUM, DATASET, CUDA_VISIBLE_DEVICES = model,log,baseline, n_view, batch_size, iter, h_dim, z_dim,nlat,leak,c_iters,eg_iters,lambdas,learning_rate,beta1,beta2,visual_num,dataset,cuda_visible_devices
   # os.environ['CUDA_VISIBLE_DEVICES'] = CUDA_VISIBLE_DEVICES
+  os.makedirs(DATASET, exist_ok=True)
+
   print("GPUs: ", torch.cuda.device_count())
   Parallel_Index = [int(item) for item in CUDA_VISIBLE_DEVICES.split(',') if item.isdigit()]
   GPUS = len(Parallel_Index)
   print("GPUs used in training: ", GPUS)
   BATCH_SIZE = BATCH_SIZE * GPUS# batch size for each GPU, total batch size is BATCH_SIZE * GPUS
-
+  # if LOCAL:
+  #   BATCH_SIZE = 2
   # Extra dataset dependent hyperparameters
   if DATASET == 'cifar10':
     IMAGE_SIZE = 32
@@ -123,7 +127,7 @@ def main(model,
   curr_iter = C_iter = EG_iter = 0
   C_update, EG_update = True, False
   print('Training starts...')
-  torch.save(wali.module.state_dict(), f'cifar10/models/{MODEL}-init.ckpt')
+  torch.save(wali.module.state_dict(), f'{DATASET}/models/{MODEL}-init.ckpt')
   for curr_iter in range(ITER):
     for batch_idx, (x, _) in enumerate(train_loader, 1):
       running_losses = [0, 0]
@@ -202,29 +206,29 @@ def main(model,
 
       # save model
     if curr_iter % 5 == 0:
-      torch.save(wali.module.state_dict(), f'cifar10/models/{MODEL}-epoch-{curr_iter}.ckpt')
-      print(f'Model saved to cifar10/models/{MODEL}-epoch-{curr_iter}.ckpt')
-      logging.info(f"Model saved to cifar10/models/{MODEL}-epoch-{curr_iter}.ckpt")
+      torch.save(wali.module.state_dict(), f'{DATASET}/models/{MODEL}-epoch-{curr_iter}.ckpt')
+      print(f'Model saved to {DATASET}/models/{MODEL}-epoch-{curr_iter}.ckpt')
+      logging.info(f"Model saved to {DATASET}/models/{MODEL}-epoch-{curr_iter}.ckpt")
 
-      # # plot training loss curve
-      # plt.figure(figsize=(10, 5))
-      # plt.title('Training loss curve')
-      # plt.plot(EG_losses, label='Encoder + Generator')
-      # plt.plot(C_losses, label='Critic')
-      # plt.xlabel('Iterations')
-      # plt.ylabel('Loss')
-      # plt.legend()
-      # plt.savefig('cifar10/loss_curve.png')
+    # plot training loss curve
+    plt.figure(figsize=(10, 5))
+    plt.title('Training loss curve')
+    plt.plot(EG_losses, label='Encoder + Generator')
+    plt.plot(C_losses, label='Critic')
+    plt.xlabel('Iterations')
+    plt.ylabel('Loss')
+    plt.legend()
+    plt.savefig(f'./{DATASET}/loss_curve-{curr_iter}.png')
 
-      # # plot reconstructed images and samples
-      # wali.eval()
-      # real_x, rect_x = init_x[:VISUAL_NUM], wali.reconstruct(init_x[:VISUAL_NUM]).detach_()
-      # rect_imgs = torch.cat((real_x.unsqueeze(1), rect_x.unsqueeze(1)), dim=1) 
-      # rect_imgs = rect_imgs.view(VISUAL_NUM * 2, NUM_CHANNELS, IMAGE_SIZE, IMAGE_SIZE).cpu()
-      # genr_imgs = wali.generate(noise).detach_().cpu()
-      # utils.save_image(rect_imgs * 0.5 + 0.5, 'cifar10/rect%d.png' % curr_iter)
-      # utils.save_image(genr_imgs * 0.5 + 0.5, 'cifar10/genr%d.png' % curr_iter)
-      # wali.train()
+    # plot reconstructed images and samples
+    wali.eval()
+    real_x, rect_x = init_x[:VISUAL_NUM], wali.reconstruct(init_x[:VISUAL_NUM]).detach_()
+    rect_imgs = torch.cat((real_x.unsqueeze(1), rect_x.unsqueeze(1)), dim=1) 
+    rect_imgs = rect_imgs.view(VISUAL_NUM * 2, NUM_CHANNELS, IMAGE_SIZE, IMAGE_SIZE).cpu()
+    genr_imgs = wali.generate(noise).detach_().cpu()
+    utils.save_image(rect_imgs * 0.5 + 0.5, f'{DATASET}/rect%d.png' % curr_iter)
+    utils.save_image(genr_imgs * 0.5 + 0.5, f'{DATASET}/genr%d.png' % curr_iter)
+    wali.train()
     # Outside of batch for loop ( simclr schedule updates)
     # if curr_iter >= 10:
     #     schedulerSimCLR.step()
