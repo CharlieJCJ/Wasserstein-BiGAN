@@ -179,7 +179,7 @@ class WALI(nn.Module):
   def reconstruct(self, x):
     h, z = self.encode(x)
     output = self.generate([h.data])
-    print("h", h.shape, "z", z.shape, "output", output.shape)
+    # print("h", h.shape, "z", z.shape, "output", output.shape)
     return output
 
   def criticize(self, x, z_hat, x_tilde, z):

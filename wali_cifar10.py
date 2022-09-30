@@ -21,7 +21,7 @@ datetime_object = datetime.datetime.now()
 print(datetime_object)
 # os.environ['CUDA_VISIBLE_DEVICES'] = "2, 3, 4, 5"
 WRITER_ITER = 10
-MODELSAVE_ITER = 1 # save every 5 epochs # FIXME
+MODELSAVE_ITER = 5 # save every 5 epochs
 # cudnn.benchmark = False
 torch.manual_seed(1)
 torch.cuda.manual_seed_all(1)
@@ -163,7 +163,7 @@ def main(model,
       # original_imgs.size(0) = batch size
       # x[2] is the original image TODO
       h = torch.randn(x[2].size(0), H_DIM, 1, 1).to(device)
-      print("h shape in loop: ", h.shape)
+      # print("h shape in loop: ", h.shape)
       C_loss, EG_loss = wali(x, h, lamb=LAMBDAS, device=device, baseline = BASELINE)
       running_losses[0] += C_loss.sum()
       running_losses[1] += EG_loss.sum()
@@ -212,6 +212,14 @@ def main(model,
       #   print('[%d/%d]\tW-distance: %.4f\tC-loss: %.4f'
       #     % (curr_iter, ITER, EG_loss.item(), C_loss.item()))
 
+      
+
+      # save model
+    if curr_iter % MODELSAVE_ITER == 0:
+      torch.save(wali.module.state_dict(), f'{modeldir}/{MODEL}-epoch-{curr_iter}.ckpt')
+      print(f'Model saved to {modeldir}/{MODEL}-epoch-{curr_iter}.ckpt')
+      logging.info(f"Model saved to {modeldir}/{MODEL}-epoch-{curr_iter}.ckpt")
+
       # plot training loss curve
       print(EG_losses, C_losses)
       plt.figure(figsize=(10, 5))
@@ -233,13 +241,6 @@ def main(model,
       utils.save_image(genr_imgs * 0.5 + 0.5, f'{traindir}/genr{curr_iter}-{batch_idx}.png')
       wali.train()
       print("rect, gen images saved")
-
-      # save model
-    # if curr_iter % MODELSAVE_ITER == 0:
-    if True:
-      torch.save(wali.module.state_dict(), f'{modeldir}/{MODEL}-epoch-{curr_iter}.ckpt')
-      print(f'Model saved to {modeldir}/{MODEL}-epoch-{curr_iter}.ckpt')
-      logging.info(f"Model saved to {modeldir}/{MODEL}-epoch-{curr_iter}.ckpt")
 
     
     
