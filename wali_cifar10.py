@@ -163,6 +163,7 @@ def main(model,
       # original_imgs.size(0) = batch size
       # x[2] is the original image TODO
       h = torch.randn(x[2].size(0), H_DIM, 1, 1).to(device)
+      print("h shape in loop: ", h.shape)
       C_loss, EG_loss = wali(x, h, lamb=LAMBDAS, device=device, baseline = BASELINE)
       running_losses[0] += C_loss.sum()
       running_losses[1] += EG_loss.sum()
