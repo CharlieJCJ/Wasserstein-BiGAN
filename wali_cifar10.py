@@ -16,8 +16,12 @@ import logging
 import click
 # from constants import *
 import os
+import datetime
+datetime_object = datetime.datetime.now()
+print(datetime_object)
 # os.environ['CUDA_VISIBLE_DEVICES'] = "2, 3, 4, 5"
 WRITER_ITER = 10
+MODELSAVE_ITER = 1 # save every 5 epochs # FIXME
 # cudnn.benchmark = False
 torch.manual_seed(1)
 torch.cuda.manual_seed_all(1)
@@ -67,9 +71,12 @@ def main(model,
          cuda_visible_devices):
   MODEL,LOG,BASELINE, N_VIEW, BATCH_SIZE, ITER,  H_DIM, Z_DIM, NLAT, LEAK,C_ITERS, EG_ITERS, LAMBDAS, LEARNING_RATE, BETA1, BETA2, VISUAL_NUM, DATASET, CUDA_VISIBLE_DEVICES = model,log,baseline, n_view, batch_size, iter, h_dim, z_dim,nlat,leak,c_iters,eg_iters,lambdas,learning_rate,beta1,beta2,visual_num,dataset,cuda_visible_devices
   # os.environ['CUDA_VISIBLE_DEVICES'] = CUDA_VISIBLE_DEVICES
-  os.makedirs(DATASET, exist_ok=True)
-  os.makedirs(f"{DATASET}/models", exist_ok=True)
+  traindir = f"train/{DATASET}-{datetime_object}"
+  modeldir = f"{modeldir}/models"
+  os.makedirs(traindir, exist_ok=True)
+  os.makedirs(modeldir, exist_ok=True)
 
+  
   print("GPUs: ", torch.cuda.device_count())
   Parallel_Index = [int(item) for item in CUDA_VISIBLE_DEVICES.split(',') if item.isdigit()]
   GPUS = len(Parallel_Index)
@@ -128,7 +135,7 @@ def main(model,
   curr_iter = C_iter = EG_iter = 0
   C_update, EG_update = True, False
   print('Training starts...')
-  torch.save(wali.module.state_dict(), f'{DATASET}/models/{MODEL}-init.ckpt')
+  torch.save(wali.module.state_dict(), f'{modeldir}/{MODEL}-init.ckpt')
   for curr_iter in range(ITER):
     for batch_idx, (x, _) in enumerate(train_loader, 1):
       running_losses = [0, 0]
@@ -148,8 +155,7 @@ def main(model,
       if curr_iter == 0:
         init_x = original_imgs
         curr_iter += 1
-        os.makedirs("MNIST", exist_ok=True)
-        utils.save_image(init_x * 0.5 + 0.5, f'MNIST/init-{MODEL}.png')
+        utils.save_image(init_x * 0.5 + 0.5, f'{traindir}/init-batch-imageSanityCheck{MODEL}.png')
       # Forward pass, get loss
       # Sample h from a prior distribution ~ N(0, 1)
       # original_imgs.size(0) = batch size
@@ -211,7 +217,7 @@ def main(model,
       plt.xlabel('Iterations')
       plt.ylabel('Loss')
       plt.legend()
-      plt.savefig(f'./{DATASET}/loss_curve-{curr_iter}-{batch_idx}.png')
+      plt.savefig(f'{traindir}/loss_curve-{curr_iter}-{batch_idx}.png')
       print("loss curve saved")
       # plot reconstructed images and samples
       wali.eval()
@@ -219,16 +225,16 @@ def main(model,
       rect_imgs = torch.cat((real_x.unsqueeze(1), rect_x.unsqueeze(1)), dim=1) 
       rect_imgs = rect_imgs.view(VISUAL_NUM * 2, NUM_CHANNELS, IMAGE_SIZE, IMAGE_SIZE).cpu()
       genr_imgs = wali.generate(noise).detach_().cpu()
-      utils.save_image(rect_imgs * 0.5 + 0.5, f'{DATASET}/rect{curr_iter}-{batch_idx}.png')
-      utils.save_image(genr_imgs * 0.5 + 0.5, f'{DATASET}/genr{curr_iter}-{batch_idx}.png')
+      utils.save_image(rect_imgs * 0.5 + 0.5, f'{traindir}/rect{curr_iter}-{batch_idx}.png')
+      utils.save_image(genr_imgs * 0.5 + 0.5, f'{traindir}/genr{curr_iter}-{batch_idx}.png')
       wali.train()
       print("rect, gen images saved")
 
       # save model
-    if curr_iter % 5 == 0:
-      torch.save(wali.module.state_dict(), f'{DATASET}/models/{MODEL}-epoch-{curr_iter}.ckpt')
-      print(f'Model saved to {DATASET}/models/{MODEL}-epoch-{curr_iter}.ckpt')
-      logging.info(f"Model saved to {DATASET}/models/{MODEL}-epoch-{curr_iter}.ckpt")
+    if curr_iter % MODELSAVE_ITER == 0:
+      torch.save(wali.module.state_dict(), f'{modeldir}/{MODEL}-epoch-{curr_iter}.ckpt')
+      print(f'Model saved to {modeldir}/{MODEL}-epoch-{curr_iter}.ckpt')
+      logging.info(f"Model saved to {modeldir}/{MODEL}-epoch-{curr_iter}.ckpt")
 
     
     
