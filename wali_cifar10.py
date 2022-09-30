@@ -212,6 +212,7 @@ def main(model,
       plt.ylabel('Loss')
       plt.legend()
       plt.savefig(f'./{DATASET}/loss_curve-{curr_iter}-{batch_idx}.png')
+      print("loss curve saved")
       # plot reconstructed images and samples
       wali.eval()
       real_x, rect_x = init_x[:VISUAL_NUM], wali.reconstruct(init_x[:VISUAL_NUM]).detach_()
@@ -221,6 +222,7 @@ def main(model,
       utils.save_image(rect_imgs * 0.5 + 0.5, f'{DATASET}/rect{curr_iter}-{batch_idx}.png')
       utils.save_image(genr_imgs * 0.5 + 0.5, f'{DATASET}/genr{curr_iter}-{batch_idx}.png')
       wali.train()
+      print("rect, gen images saved")
 
       # save model
     if curr_iter % 5 == 0:
