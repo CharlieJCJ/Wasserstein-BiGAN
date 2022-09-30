@@ -155,6 +155,7 @@ def main(model,
       # Curr_iter starts from one, and stores to init_x
       if curr_iter == 0:
         init_x = original_imgs
+        print("init_x shape: ", init_x.shape)
         curr_iter += 1
         utils.save_image(init_x * 0.5 + 0.5, f'{traindir}/init-batch-imageSanityCheck{MODEL}.png')
       # Forward pass, get loss
