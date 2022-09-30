@@ -40,10 +40,10 @@ torch.cuda.manual_seed_all(1)
 @click.option('--Z_DIM', type=int, help='Latent dimension', default=128, show_default=True)
 @click.option('--NLAT', type=int, help='NLAT', default=512, show_default=True)
 @click.option('--LEAK', type=float, help='Leak', default=0.2, show_default=True)
-@click.option('--C_ITERS', type=int, help='Critic iterations', default=1, show_default=True)
+@click.option('--C_ITERS', type=int, help='Critic iterations', default=5, show_default=True) # Citer = 5
 @click.option('--EG_ITERS', type=int, help='Encoder / generator iterations', default=1)
 @click.option('--LAMBDAS', type=int, help='Strength of gradient penalty', default=10)
-@click.option('--LEARNING_RATE', type=float, help='Learning rate', default=1e-5)
+@click.option('--LEARNING_RATE', type=float, help='Learning rate', default=0.002)
 @click.option('--BETA1', type=float, help='BETA1', default=0.5)
 @click.option('--BETA2', type=float, help='BETA2', default=0.999)
 @click.option('--VISUAL_NUM', type=int, help='VISUAL_NUM', default=8)
@@ -124,13 +124,13 @@ def main(model,
   n_total_runs = len(train_loader)
   # FIXME - wali.get_encoder_parameters() might be the entire resnet + MLP. - FIXED
   optimizerEG = Adam(list(wali.get_encoder_parameters()) + list(wali.get_generator_parameters()), 
-    lr=LEARNING_RATE, betas=(BETA1, BETA2))
+    lr=LEARNING_RATE, betas=(BETA1, BETA2), weight_decay=2.5e-5)
   optimizerC = Adam(wali.get_critic_parameters(), 
-    lr=LEARNING_RATE, betas=(BETA1, BETA2))
+    lr=LEARNING_RATE, betas=(BETA1, BETA2), weight_decay=2.5e-5)
   # SimCLR Encoder and training scheduler
   # optimizerSimCLR = torch.optim.Adam(wali.get_encoder_parameters(), 0.0003, weight_decay=1e-4)
 
-  # schedulerSimCLR = torch.optim.lr_scheduler.CosineAnnealingLR(optimizerSimCLR, T_max=len(train_loader), eta_min=0,
+  # schedulerEG = torch.optim.lr_scheduler.CosineAnnealingLR(optimizerEG, T_max=len(train_loader), eta_min=0,
   #                                                          last_epoch=-1)
   # scalerSimCLR = GradScaler(enabled=True)
   # criterionSimCLR = torch.nn.CrossEntropyLoss().to(device)
