@@ -228,7 +228,7 @@ def main(model,
       real_x, rect_x = init_x[:originalBATCH], wali.module.reconstruct(init_x[:originalBATCH]).detach_()
       rect_imgs = torch.cat((real_x.unsqueeze(1), rect_x.unsqueeze(1)), dim=1) 
       rect_imgs = rect_imgs.view(originalBATCH * 2, NUM_CHANNELS, IMAGE_SIZE, IMAGE_SIZE).cpu()
-      genr_imgs = wali.module.generate(noise).detach_().cpu()
+      genr_imgs = wali.module.generate([noise]).detach_().cpu()
       utils.save_image(rect_imgs * 0.5 + 0.5, f'{traindir}/rect{curr_iter}-{batch_idx}.png')
       utils.save_image(genr_imgs * 0.5 + 0.5, f'{traindir}/genr{curr_iter}-{batch_idx}.png')
       wali.train()
