@@ -177,10 +177,10 @@ class WALI(nn.Module):
     return self.G(z)
 
   def reconstruct(self, x):
-    a = self.encode(x)
-    b = self.generate(a)
-    print("a", a.shape, "b", b.shape)
-    return b
+    h, z = self.encode(x)
+    output = self.generate(h)
+    print("h", h.shape, "z", z.shape, "output", output.shape)
+    return output
 
   def criticize(self, x, z_hat, x_tilde, z):
     input_x = torch.cat((x, x_tilde), dim=0)
