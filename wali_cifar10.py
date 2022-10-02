@@ -187,7 +187,7 @@ def main(model,
         print("C_update")
         optimizerC.zero_grad()
         C_loss.sum().backward()
-        C_losses.append(C_loss.sum())
+        # C_losses.append(C_loss.sum())
         optimizerC.step()
 
         C_iter += 1
@@ -203,7 +203,7 @@ def main(model,
         print("EG_update")
         optimizerEG.zero_grad()
         EG_loss.sum().backward()
-        EG_losses.append(EG_loss.sum())
+        # EG_losses.append(EG_loss.sum())
         optimizerEG.step()
         EG_iter += 1
         if EG_iter == EG_ITERS:
@@ -227,17 +227,17 @@ def main(model,
       print(f'Model saved to {modeldir}/{MODEL}-epoch-{curr_iter}.ckpt')
       logging.info(f"Model saved to {modeldir}/{MODEL}-epoch-{curr_iter}.ckpt")
 
-      # plot training loss curve
-      print(EG_losses, C_losses)
-      plt.figure(figsize=(10, 5))
-      plt.title('Training loss curve')
-      plt.plot(torch.tensor(EG_losses).cpu(), label='Encoder + Generator')
-      plt.plot(torch.tensor(C_losses).cpu(), label='Critic')
-      plt.xlabel('Iterations')
-      plt.ylabel('Loss')
-      plt.legend()
-      plt.savefig(f'{traindir}/loss_curve-{curr_iter}-{batch_idx}.png')
-      print("loss curve saved")
+      # # plot training loss curve
+      # print(EG_losses, C_losses)
+      # plt.figure(figsize=(10, 5))
+      # plt.title('Training loss curve')
+      # plt.plot(torch.tensor(EG_losses).cpu(), label='Encoder + Generator')
+      # plt.plot(torch.tensor(C_losses).cpu(), label='Critic')
+      # plt.xlabel('Iterations')
+      # plt.ylabel('Loss')
+      # plt.legend()
+      # plt.savefig(f'{traindir}/loss_curve-{curr_iter}-{batch_idx}.png')
+      # print("loss curve saved")
       # plot reconstructed images and samples
       wali.eval()
       real_x, rect_x = init_x[:originalBATCH], wali.module.reconstruct(init_x[:originalBATCH]).detach_()
