@@ -142,7 +142,7 @@ def main(model,
   curr_iter = C_iter = EG_iter = 0
   C_update, EG_update = True, False
   print('Training starts...')
-  torch.save(wali.module.state_dict(), f'{modeldir}/{MODEL}-init.ckpt')
+  # torch.save(wali.module.state_dict(), f'{modeldir}/{MODEL}-init.ckpt')
   for curr_iter in range(ITER):
     for batch_idx, (x, _) in enumerate(train_loader, 1):
       running_losses = [0, 0]
