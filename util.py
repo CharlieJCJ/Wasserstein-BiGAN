@@ -45,7 +45,7 @@ class DeterministicConditional(nn.Module):
     self.encoder = encoder
     self.mapping = mapping
     self.shift = shift
-    self.cv1 = ConvTranspose2d(H_DIM, DIM * 4, 4, 1, 0, bias=False)
+    self.cv1 = ConvTranspose2d(Z_DIM, DIM * 4, 4, 1, 0, bias=False)
     self.cv2 = ConvTranspose2d(DIM * 4, DIM * 2, 4, 2, 1, bias=False)
     self.cv3 = ConvTranspose2d(DIM * 2, DIM, 4, 2, 1, bias=False)
     self.cv4 = ConvTranspose2d(DIM, NUM_CHANNELS, 4, 2, 1, bias=False)
@@ -209,6 +209,7 @@ class WALI(nn.Module):
   # Now: I pass in original images
   # Edit: x is now 3 dimensional
   def forward(self, x, h, lamb=10, device="cuda", baseline = False):
+    # h is now z
     # x_tilde is the generated image
     transformed_imgs = torch.cat([x[0], x[1]], dim=0) # expecting 512 * 3 * 32 * 32 (batch size is 256)
     original_imgs = x[2]
@@ -220,9 +221,9 @@ class WALI(nn.Module):
     # print(h_hat.shape, z_hat.shape, x_tilde.shape)
     if baseline:
         print("Baseline used")
-        data_preds, sample_preds = self.criticize(original_imgs, h_hat, x_tilde, h) 
+        data_preds, sample_preds = self.criticize(original_imgs, z_hat, x_tilde, h) 
         EG_loss = torch.mean(data_preds - sample_preds).double()
-        C_loss = -EG_loss + lamb * self.calculate_grad_penalty(original_imgs.data, h_hat.data, x_tilde.data, h.data)
+        C_loss = -EG_loss + lamb * self.calculate_grad_penalty(original_imgs.data, z_hat.data, x_tilde.data, h.data)
         return C_loss , EG_loss
     else:
       criterionSimCLR = torch.nn.CrossEntropyLoss().to(device)
@@ -232,10 +233,10 @@ class WALI(nn.Module):
           __, features = self.encode(transformed_imgs) # only use z
           logits, labels = info_nce_loss(features, device)
           Constrastive_loss = criterionSimCLR(logits, labels)
-      data_preds, sample_preds = self.criticize(original_imgs, h_hat, x_tilde, h) 
+      data_preds, sample_preds = self.criticize(original_imgs, z_hat, x_tilde, h) 
       EG_loss = torch.mean(data_preds - sample_preds)
-      C_loss = -EG_loss + lamb * self.calculate_grad_penalty(original_imgs.data, h_hat.data, x_tilde.data, h.data)
-      Reconstruction_loss = nn.MSELoss()(original_imgs, self.generate([h_hat]))    # Need to check this - z is basically vector h? H_DIM, Z_DIM
+      C_loss = -EG_loss + lamb * self.calculate_grad_penalty(original_imgs.data, z_hat.data, x_tilde.data, h.data)
+      Reconstruction_loss = nn.MSELoss()(original_imgs, self.generate([z_hat]))    # Need to check this - z is basically vector h? H_DIM, Z_DIM
       return C_loss + Reconstruction_loss, EG_loss + Constrastive_loss
 def info_nce_loss(features, device):
     features = features.reshape((features.shape[0], features.shape[1]))

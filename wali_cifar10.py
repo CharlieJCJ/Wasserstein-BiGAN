@@ -134,7 +134,7 @@ def main(model,
   #                                                          last_epoch=-1)
   # scalerSimCLR = GradScaler(enabled=True)
   # criterionSimCLR = torch.nn.CrossEntropyLoss().to(device)
-  noise = torch.randn(originalBATCH, NLAT, 1, 1, device=device)
+  noise = torch.randn(originalBATCH, Z_DIM, 1, 1, device=device)
   wali = torch.nn.DataParallel(wali, device_ids=list(range(GPUS))).to(device)
   # Debugging purposes :down
   # test_size(train_loader)
@@ -168,7 +168,7 @@ def main(model,
       # Sample h from a prior distribution ~ N(0, 1)
       # original_imgs.size(0) = batch size
       # x[2] is the original image TODO
-      h = torch.randn(x[2].size(0), H_DIM, 1, 1).to(device)
+      h = torch.randn(x[2].size(0), Z_DIM, 1, 1).to(device)
       # print("h shape in loop: ", h.shape)
       C_loss, EG_loss = wali(x, h, lamb=LAMBDAS, device=device, baseline = BASELINE)
       running_losses[0] += C_loss.sum()
@@ -255,20 +255,20 @@ def main(model,
     #     schedulerSimCLR.step()
   print("End of training")
 
-def create_generator(H_DIM, IMAGE_SIZE):
-  return Generator(IMAGE_SIZE, H_DIM, 8)
+def create_generator(Z_DIM, IMAGE_SIZE):
+  return Generator(IMAGE_SIZE, Z_DIM, 8)
 
-def create_critic(H_DIM, LEAK, DIM_D, IMAGE_SIZE):
+def create_critic(Z_DIM, LEAK, DIM_D, IMAGE_SIZE):
   x_mapping = Discriminator(IMAGE_SIZE)
   # FIXME -  Question: what is DIM?
   # kernal size is 1, stride is 1, padding is 0. 
   z_mapping = nn.Sequential(
-    Conv2d(H_DIM, 512, 1, 1, 0), LeakyReLU(LEAK),
+    Conv2d(Z_DIM, 512, 1, 1, 0), LeakyReLU(LEAK),
     Conv2d(512, 512, 1, 1, 0), LeakyReLU(LEAK))
   
   # DIM_D = 8192 - dimension from discriminator
   joint_mapping = nn.Sequential(
-    Conv2d(DIM_D + 512, 1024, 1, 1, 0), LeakyReLU(LEAK),
+    Conv2d(DIM_D + Z_DIM, 1024, 1, 1, 0), LeakyReLU(LEAK),
     Conv2d(1024, 1024, 1, 1, 0), LeakyReLU(LEAK),
     Conv2d(1024, 1, 1, 1, 0))
   # last output channel is 1, output 0, 1.
@@ -278,8 +278,8 @@ def create_critic(H_DIM, LEAK, DIM_D, IMAGE_SIZE):
 
 def create_WALI(H_DIM, Z_DIM, LEAK, DIM_D, IMAGE_SIZE):
   E = ResNetSimCLR(H_DIM, Z_DIM)
-  G = create_generator(H_DIM, IMAGE_SIZE)
-  C = create_critic(H_DIM, LEAK, DIM_D, IMAGE_SIZE)
+  G = create_generator(Z_DIM, IMAGE_SIZE)
+  C = create_critic(Z_DIM, LEAK, DIM_D, IMAGE_SIZE)
   wali = WALI(E, G, C)
   return wali
 
