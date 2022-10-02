@@ -25,6 +25,7 @@ MODELSAVE_ITER = 5 # save every 5 epochs
 # cudnn.benchmark = False
 torch.manual_seed(1)
 torch.cuda.manual_seed_all(1)
+torch.cuda.empty_cache()
 # cudnn.deterministic = True
 
 
