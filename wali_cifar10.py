@@ -120,7 +120,7 @@ def main(model,
 
   train_loader = torch.utils.data.DataLoader(
       train_dataset, batch_size=BATCH_SIZE, shuffle=True,
-      num_workers=2, drop_last=True)
+      num_workers=0, drop_last=True)
   n_total_runs = len(train_loader)
   # FIXME - wali.get_encoder_parameters() might be the entire resnet + MLP. - FIXED
   optimizerEG = Adam(list(wali.get_encoder_parameters()) + list(wali.get_generator_parameters()), 
