@@ -136,6 +136,7 @@ def test():
     net = ResNet152()
     # x = net(torch.randn(1, 3, 32, 32))
     y = net(torch.randn(1, 3, 128, 128))
+    print(y.size())
     # print(x.size(), y.size())
 
 test()
