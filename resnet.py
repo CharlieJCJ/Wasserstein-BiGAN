@@ -94,21 +94,21 @@ class ResNet(nn.Module):
 
     def forward(self, x):
         out = F.relu(self.bn1(self.conv1(x)))
-        print("encode1", out.shape)
+        # print("encode1", out.shape)
         out = self.layer1(out)
-        print("encode2", out.shape)
+        # print("encode2", out.shape)
         out = self.layer2(out)
-        print("encode3", out.shape)
+        # print("encode3", out.shape)
         out = self.layer3(out)
-        print("encode4", out.shape)
+        # print("encode4", out.shape)
         out = self.layer4(out)
-        print("encode5", out.shape)
-        out = F.avg_pool2d(out, 16) # Need to adapt to different image resolution
-        print("encode6", out.shape)
+        # print("encode5", out.shape)
+        out = F.avg_pool2d(out, 16) # Need to adapt to different image resolution # 128 -> 16; 32 -> 4
+        # print("encode6", out.shape)
         out = out.view(out.size(0), -1)
-        print("encode7", out.shape)
+        # print("encode7", out.shape)
         out = self.linear(out)
-        print("encode8 Resnet output shape (h)", out.shape)
+        # print("encode8 Resnet output shape (h)", out.shape)
         return out
 
 
@@ -139,4 +139,4 @@ def test():
     print(y.size())
     # print(x.size(), y.size())
 
-test()
+# test()
