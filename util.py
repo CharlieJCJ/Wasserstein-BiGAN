@@ -323,7 +323,8 @@ class ContrastiveLearningDataset:
     def get_simclr_pipeline_transform(size, s=1):
         """Return a set of data augmentation transformations as described in the SimCLR paper."""
         color_jitter = transforms.ColorJitter(0.8 * s, 0.8 * s, 0.8 * s, 0.2 * s)
-
+        
+        # Reshape to size x size (no matter what)
         data_transforms = transforms.Compose([transforms.Resize(size=size),
                                               transforms.RandomResizedCrop(size=size),
                                               transforms.RandomHorizontalFlip(),
@@ -351,9 +352,10 @@ class ContrastiveLearningDataset:
                                                                   self.get_simclr_pipeline_transform(32),
                                                                   n_views),
                                                               download=True),
-                          'LSUN': lambda: datasets.LSUN(self.root_folder, classes=['bedroom_train'], transform = transforms.Compose([
-                                                                                                                  transforms.ToTensor(),
-                                                                                                                  transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])),
+                          'LSUN': lambda: datasets.LSUN(self.root_folder, classes=['bedroom_train'], 
+                                                                  transform=ContrastiveLearningViewGenerator(
+                                                                  self.get_simclr_pipeline_transform(256),
+                                                                  n_views))
                                                             }
 # transform=ContrastiveLearningViewGenerator(self.get_simclr_pipeline_transform(96), n_views),
         try:
