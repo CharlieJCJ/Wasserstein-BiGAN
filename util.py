@@ -320,7 +320,7 @@ class ContrastiveLearningDataset:
         self.root_folder = root_folder
 
     @staticmethod
-    def get_simclr_pipeline_transform(size, s=1, flag_resize = False):
+    def get_simclr_pipeline_transform(size, s=1):
         """Return a set of data augmentation transformations as described in the SimCLR paper."""
         color_jitter = transforms.ColorJitter(0.8 * s, 0.8 * s, 0.8 * s, 0.2 * s)
 
@@ -350,9 +350,12 @@ class ContrastiveLearningDataset:
                                                               transform=ContrastiveLearningViewGenerator(
                                                                   self.get_simclr_pipeline_transform(32),
                                                                   n_views),
-                                                              download=True)                                
-                                                          }
-
+                                                              download=True),
+                          'LSUN': lambda: datasets.LSUN(self.root_folder, classes=['bedroom_train'],
+                                                          
+                                                          download=True),
+                                                            }
+# transform=ContrastiveLearningViewGenerator(self.get_simclr_pipeline_transform(96), n_views),
         try:
             dataset_fn = valid_datasets[name]
         except KeyError:
@@ -390,7 +393,8 @@ class ContrastiveLearningViewGenerator(object):
         # print("My length is", len([self.base_transform(x) for i in range(self.n_views)] + [transform(x)]))
         # return [self.base_transform(x) for i in range(self.n_views)]
         a = self.base_transform(x)
-        b, c = self.base_transform(x), transform(x)
+        b = self.base_transform(x)
+        c = transform(x)
         # print("a", a.shape, "b", b.shape, "c", c.shape)
         return a, b, c # dataloader handles the rest
 
