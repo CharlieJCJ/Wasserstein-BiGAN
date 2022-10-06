@@ -103,7 +103,7 @@ class ResNet(nn.Module):
         print("encode4", out.shape)
         out = self.layer4(out)
         print("encode5", out.shape)
-        out = F.avg_pool2d(out, 4) # Need to adapt to different image resolution
+        out = F.avg_pool2d(out, 16) # Need to adapt to different image resolution
         print("encode6", out.shape)
         out = out.view(out.size(0), -1)
         print("encode7", out.shape)
@@ -134,7 +134,7 @@ def ResNet152():
 
 def test():
     net = ResNet152()
-    x = net(torch.randn(1, 3, 32, 32))
+    # x = net(torch.randn(1, 3, 32, 32))
     y = net(torch.randn(1, 3, 128, 128))
     print(x.size(), y.size())
 
