@@ -48,7 +48,7 @@ torch.cuda.empty_cache()
 @click.option('--BETA1', type=float, help='BETA1', default=0.5)
 @click.option('--BETA2', type=float, help='BETA2', default=0.999)
 @click.option('--VISUAL_NUM', type=int, help='VISUAL_NUM', default=8)
-@click.option('--DATASET', help='Dataset name', type=click.Choice(['cifar10', 'mnist', 'celeba']), default='cifar10', show_default=True)
+@click.option('--DATASET', help='Dataset name', type=click.Choice(['cifar10', 'mnist', 'celeba', 'LSUN']), default='cifar10', show_default=True)
 @click.option('--CUDA_VISIBLE_DEVICES', help='CUDA_VISIBLE_DEVICES', type=str, default='0', show_default=True)
 @click.option('--LOAD', help='Load Path', type=str, default="", show_default=True)
 # @click.option('--LOCAL', help='Local Computer with small GPU memory', type=bool, default=False, show_default=True)
@@ -102,6 +102,7 @@ def main(model,
     IMAGE_SIZE = 128
     NUM_CHANNELS = 3
     DIM_D = 8192
+    MODELSAVE_ITER = 1 # LSUN is huge dataset (3M images)
   else:   # default
     IMAGE_SIZE = 32
     NUM_CHANNELS = 3
