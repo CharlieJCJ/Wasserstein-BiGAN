@@ -692,12 +692,12 @@ class Discriminator(nn.Module):
         return out
 
 def test():
-    net = Discriminator(32)
-    y = net(torch.randn(1, 3, 32, 32))
+    net = Discriminator(128)
+    y = net(torch.randn(1, 3, 128, 128))
     print(y.size())  # 8192
     import numpy as np
     # Our code should follow this syntax as well, credit: 
-    print(nn.MSELoss()(torch.randn(1, 3, 32, 32, requires_grad = True), torch.randn(1, 3, 32, 32)))
+    # print(nn.MSELoss()(torch.randn(1, 3, 32, 32, requires_grad = True), torch.randn(1, 3, 32, 32)))
 
 
-# test()
+test()
