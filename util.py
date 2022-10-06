@@ -220,7 +220,7 @@ class WALI(nn.Module):
     # print(h_hat.shape, z_hat.shape, x_tilde.shape)
     if baseline:
         print("Baseline used")
-        data_preds, sample_preds = self.criticize(original_imgs, h_hat, x_tilde, h) 
+        data_preds, sample_preds = self.criticize(original_imgs, h_hat, x_tilde, h)
         EG_loss = torch.mean(data_preds - sample_preds).double()
         C_loss = -EG_loss + lamb * self.calculate_grad_penalty(original_imgs.data, h_hat.data, x_tilde.data, h.data)
         return C_loss , EG_loss
@@ -323,21 +323,15 @@ class ContrastiveLearningDataset:
     def get_simclr_pipeline_transform(size, s=1, flag_resize = False):
         """Return a set of data augmentation transformations as described in the SimCLR paper."""
         color_jitter = transforms.ColorJitter(0.8 * s, 0.8 * s, 0.8 * s, 0.2 * s)
-        if flag_resize:
-          data_transforms = transforms.Compose([transforms.Resize(size=size),
-                                                transforms.RandomResizedCrop(size=size),
-                                                transforms.RandomHorizontalFlip(),
-                                                transforms.RandomApply([color_jitter], p=0.8),
-                                                transforms.RandomGrayscale(p=0.2),
-                                                GaussianBlur(kernel_size=int(0.1 * size)),
-                                                transforms.ToTensor()])
-        else:
-          data_transforms = transforms.Compose([transforms.RandomResizedCrop(size=size),
-                                                transforms.RandomHorizontalFlip(),
-                                                transforms.RandomApply([color_jitter], p=0.8),
-                                                transforms.RandomGrayscale(p=0.2),
-                                                GaussianBlur(kernel_size=int(0.1 * size)),
-                                                transforms.ToTensor()])
+
+        data_transforms = transforms.Compose([transforms.Resize(size=size),
+                                              transforms.RandomResizedCrop(size=size),
+                                              transforms.RandomHorizontalFlip(),
+                                              transforms.RandomApply([color_jitter], p=0.8),
+                                              transforms.RandomGrayscale(p=0.2),
+                                              GaussianBlur(kernel_size=int(0.1 * size)),
+                                              transforms.ToTensor()])
+
         return data_transforms
 
     def get_dataset(self, name, n_views):
@@ -354,7 +348,7 @@ class ContrastiveLearningDataset:
                                                           download=True), 
                           'mnist': lambda: datasets.MNIST(self.root_folder, train=True,
                                                               transform=ContrastiveLearningViewGenerator(
-                                                                  self.get_simclr_pipeline_transform(32, flag_resize = True),
+                                                                  self.get_simclr_pipeline_transform(32),
                                                                   n_views),
                                                               download=True)                                
                                                           }
