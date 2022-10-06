@@ -351,7 +351,9 @@ class ContrastiveLearningDataset:
                                                                   self.get_simclr_pipeline_transform(32),
                                                                   n_views),
                                                               download=True),
-                          'LSUN': lambda: datasets.LSUN(self.root_folder, classes=['bedroom_train']),
+                          'LSUN': lambda: datasets.LSUN(self.root_folder, classes=['bedroom_train'], transform = transforms.Compose([
+                                                                                                                  transforms.ToTensor(),
+                                                                                                                  transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])),
                                                             }
 # transform=ContrastiveLearningViewGenerator(self.get_simclr_pipeline_transform(96), n_views),
         try:
