@@ -354,7 +354,7 @@ class ContrastiveLearningDataset:
                                                               download=True),
                           'LSUN': lambda: datasets.LSUN(self.root_folder, classes=['bedroom_train'], 
                                                                   transform=ContrastiveLearningViewGenerator(
-                                                                  self.get_simclr_pipeline_transform(256),
+                                                                  self.get_simclr_pipeline_transform(128),
                                                                   n_views))
                                                             }
 # transform=ContrastiveLearningViewGenerator(self.get_simclr_pipeline_transform(96), n_views),
