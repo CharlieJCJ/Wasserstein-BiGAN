@@ -102,7 +102,7 @@ def main(model,
     IMAGE_SIZE = 128
     NUM_CHANNELS = 3
     DIM_D = 8192
-    MODELSAVE_ITER = 1 # LSUN is huge dataset (3M images)
+    MODELSAVE_ITER = 2000 # LSUN is huge dataset (3M images)
   else:   # default
     IMAGE_SIZE = 32
     NUM_CHANNELS = 3
