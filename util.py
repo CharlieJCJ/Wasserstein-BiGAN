@@ -103,7 +103,7 @@ class DeterministicConditional(nn.Module):
     #   output = self.mapping(input)
     # else: 
     print("I'm a generator")
-    output = self.cv1(output)
+    output = self.cv1(input)
     print("4:", output.shape)
     output = self.bn1(output)
     print("5:", output.shape)
