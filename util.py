@@ -52,6 +52,7 @@ class DeterministicConditional(nn.Module):
     self.shift.data = value
 
   def forward(self, input):
+    input = input[0]
     output = self.mapping(input)
     if self.shift is not None:
       output = output + self.shift
