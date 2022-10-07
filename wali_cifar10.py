@@ -283,7 +283,7 @@ def create_generator():
     ConvTranspose2d(DIM * 4, DIM * 2, 4, 2, 1, bias=False), BatchNorm2d(DIM * 2), ReLU(inplace=True),
     ConvTranspose2d(DIM * 2, DIM, 4, 2, 1, bias=False), BatchNorm2d(DIM), ReLU(inplace=True),
     ConvTranspose2d(DIM, NUM_CHANNELS, 4, 2, 1, bias=False), Tanh())
-  return DeterministicConditional(mapping)
+  return DeterministicConditional(mapping, False)
 
 def create_critic(H_DIM, LEAK, DIM_D, IMAGE_SIZE):
   x_mapping = Discriminator(IMAGE_SIZE)
