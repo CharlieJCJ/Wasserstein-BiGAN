@@ -106,7 +106,7 @@ class DeterministicConditional(nn.Module):
       print("2:", output.shape)
       output = self.rl(output)
       print("3:", output.shape)
-      output = self.cv1(input)
+      output = self.cv1(output)
       print("4:", output.shape)
       output = self.bn1(output)
       print("5:", output.shape)
@@ -142,7 +142,7 @@ class DeterministicConditional(nn.Module):
     # ConvTranspose2d(DIM, NUM_CHANNELS, 4, 2, 1, bias=False), Tanh())
     if self.shift is not None:
       output = output + self.shift
-    # print(output.shape)
+    print(output.shape)
     return output
 
 
