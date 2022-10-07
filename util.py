@@ -70,7 +70,7 @@ class DeterministicConditional(nn.Module):
     self.mapping = mapping
     self.shift = shift
     # self.cv0 = ConvTranspose2d(512, DIM * 16, 4, 1, 0, bias=False)
-    self.cv1 = ConvTranspose2d(DIM * 16, DIM * 8, 4, 1, 0, bias=False)
+    self.cv1 = ConvTranspose2d(512, DIM * 8, 4, 1, 0, bias=False)
     self.cv2 = ConvTranspose2d(DIM * 8, DIM * 4, 4, 1, 0, bias=False)
     self.cv3 = ConvTranspose2d(DIM * 4, DIM * 2, 4, 2, 1, bias=False)
     self.cv4 = ConvTranspose2d(DIM * 2, DIM, 4, 2, 1, bias=False)
