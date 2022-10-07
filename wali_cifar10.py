@@ -229,9 +229,9 @@ def main(model,
 
       # save model
       if batch_idx % MODELSAVE_ITER == 0:
-        torch.save(wali.module.state_dict(), f'{modeldir}/{MODEL}-epoch-{curr_iter}.ckpt')
-        print(f'Model saved to {modeldir}/{MODEL}-epoch-{curr_iter}.ckpt')
-        logging.info(f"Model saved to {modeldir}/{MODEL}-epoch-{curr_iter}.ckpt")
+        torch.save(wali.module.state_dict(), f'{modeldir}/{MODEL}-epoch-{curr_iter}-{batch_idx}.ckpt')
+        print(f'Model saved to {modeldir}/{MODEL}-epoch-{curr_iter}-{batch_idx}.ckpt')
+        logging.info(f"Model saved to {modeldir}/{MODEL}-epoch-{curr_iter}-{batch_idx}.ckpt")
 
         # # plot training loss curve
         # print(EG_losses, C_losses)
