@@ -54,6 +54,7 @@ torch.cuda.empty_cache()
 @click.option('--DATASET', help='Dataset name', type=click.Choice(['cifar10', 'mnist', 'celeba', 'LSUN']), default='cifar10', show_default=True)
 @click.option('--CUDA_VISIBLE_DEVICES', help='CUDA_VISIBLE_DEVICES', type=str, default='0', show_default=True)
 @click.option('--LOAD', help='Load Path', type=str, default="", show_default=True)
+@click.option('--ROOTDIR', help='DIM_D', type=str, default="./datasets", show_default=True)
 # @click.option('--LOCAL', help='Local Computer with small GPU memory', type=bool, default=False, show_default=True)
 def main(model, 
          log, 
@@ -74,8 +75,8 @@ def main(model,
          visual_num, 
          dataset, 
          cuda_visible_devices,
-         load):
-  MODEL,LOG,BASELINE, N_VIEW, BATCH_SIZE, ITER,  H_DIM, Z_DIM, NLAT, LEAK,C_ITERS, EG_ITERS, LAMBDAS, LEARNING_RATE, BETA1, BETA2, VISUAL_NUM, DATASET, CUDA_VISIBLE_DEVICES, LOAD = model,log,baseline, n_view, batch_size, iter, h_dim, z_dim,nlat,leak,c_iters,eg_iters,lambdas,learning_rate,beta1,beta2,visual_num,dataset,cuda_visible_devices, load
+         load, rootdir):
+  MODEL,LOG,BASELINE, N_VIEW, BATCH_SIZE, ITER,  H_DIM, Z_DIM, NLAT, LEAK,C_ITERS, EG_ITERS, LAMBDAS, LEARNING_RATE, BETA1, BETA2, VISUAL_NUM, DATASET, CUDA_VISIBLE_DEVICES, LOAD, ROOTDIR = model,log,baseline, n_view, batch_size, iter, h_dim, z_dim,nlat,leak,c_iters,eg_iters,lambdas,learning_rate,beta1,beta2,visual_num,dataset,cuda_visible_devices, load, rootdir
   # os.environ['CUDA_VISIBLE_DEVICES'] = CUDA_VISIBLE_DEVICES
   originalBATCH = BATCH_SIZE
   traindir = f"train/{DATASET}-{datetime_object}"
@@ -123,7 +124,7 @@ def main(model,
     wali.load_state_dict(torch.load(LOAD))
 
   # Load CIFAR10 dataset
-  dataset = ContrastiveLearningDataset("./datasets")
+  dataset = ContrastiveLearningDataset(ROOTDIR)
   # Each have 2 views (2 views + original image)
   train_dataset = dataset.get_dataset(DATASET, N_VIEW)
 
