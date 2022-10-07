@@ -102,6 +102,7 @@ class DeterministicConditional(nn.Module):
     #   print("i'm an encoder")
     #   output = self.mapping(input)
     # else: 
+    print("3:", input.shape)
     print("I'm a generator")
     output = self.cv1(input)
     print("4:", output.shape)
