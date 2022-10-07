@@ -96,6 +96,7 @@ class DeterministicConditional(nn.Module):
     self.shift.data = value
 
   def forward(self, input):
+    input = input[0]
     if self.encoder == True: 
       output = self.mapping(input)
     else: 
