@@ -240,7 +240,7 @@ class WALI(nn.Module):
     return output
 
   def criticize(self, x, z_hat, x_tilde, z):
-    print("x", x.shape, "z_hat", z_hat.shape, "x_tilde", x_tilde.shape, "z", z.shape)
+    # print("x", x.shape, "z_hat", z_hat.shape, "x_tilde", x_tilde.shape, "z", z.shape)
     input_x = torch.cat((x, x_tilde), dim=0)
     input_z = torch.cat((z_hat, z), dim=0)
     output = self.C(input_x, input_z) # TODO: check output here
