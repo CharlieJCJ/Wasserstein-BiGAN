@@ -26,6 +26,7 @@ MODELSAVE_ITER = 2000 # save every 5000 batches
 torch.manual_seed(1)
 torch.cuda.manual_seed_all(1)
 torch.cuda.empty_cache()
+SAMPLESAVE_ITER = 100
 # cudnn.deterministic = True
 
 
@@ -245,6 +246,8 @@ def main(model,
         # plt.savefig(f'{traindir}/loss_curve-{curr_iter}-{batch_idx}.png')
         # print("loss curve saved")
         # plot reconstructed images and samples
+      if batch_idx % SAMPLESAVE_ITER == 0:
+        print("Sample save to ", f'{traindir}/rect-{curr_iter}-{batch_idx}.png')
         wali.eval()
         real_x, rect_x = init_x[:originalBATCH], wali.module.reconstruct(init_x[:originalBATCH]).detach_()
         rect_imgs = torch.cat((real_x.unsqueeze(1), rect_x.unsqueeze(1)), dim=1) 
