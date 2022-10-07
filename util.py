@@ -96,10 +96,13 @@ class DeterministicConditional(nn.Module):
     self.shift.data = value
 
   def forward(self, input):
+    print("Using generator forward")
     input = input[0]
     if self.encoder == True: 
+      print("i'm an encoder")
       output = self.mapping(input)
     else: 
+      print("I'm a generator")
       output = self.cv0(input)
       print("1:", output.shape)
       output = self.bn0(output)
