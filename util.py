@@ -34,26 +34,16 @@ class MaxOut(nn.Module):
 
 # A deterministic conditional mapping. Used as an encoder or a generator.
 class DeterministicConditional(nn.Module):
-  def __init__(self, mapping, shift=None, encoder = True):
+  def __init__(self, mapping, shift=None):
     """ A deterministic conditional mapping. Used as an encoder or a generator.
-
     Args:
       mapping: An nn.Sequential module that maps the input to the output deterministically.
       shift: A pixel-wise shift added to the output of mapping. Default: None
     """
     super().__init__()
-    self.encoder = encoder
+
     self.mapping = mapping
     self.shift = shift
-    self.cv1 = ConvTranspose2d(H_DIM, DIM * 4, 4, 1, 0, bias=False)
-    self.cv2 = ConvTranspose2d(DIM * 4, DIM * 2, 4, 2, 1, bias=False)
-    self.cv3 = ConvTranspose2d(DIM * 2, DIM, 4, 2, 1, bias=False)
-    self.cv4 = ConvTranspose2d(DIM, NUM_CHANNELS, 4, 2, 1, bias=False)
-    self.bn1 = BatchNorm2d(DIM * 4)
-    self.bn2 = BatchNorm2d(DIM * 2)
-    self.bn3 = BatchNorm2d(DIM)
-    self.rl = ReLU(inplace=True)
-    self.tanh = Tanh()
 
   def set_shift(self, value):
     if self.shift is None:
@@ -62,30 +52,11 @@ class DeterministicConditional(nn.Module):
     self.shift.data = value
 
   def forward(self, input):
-    if self.encoder == True: 
-      output = self.mapping(input)
-    else: 
-      output = self.cv1(input)
-      output = self.bn1(output)
-      output = self.rl(output)
-      output = self.cv2(output)
-      output = self.bn2(output)
-      output = self.rl(output)
-      output = self.cv3(output)
-      output = self.bn3(output)
-      output = self.rl(output)
-      output = self.cv4(output)
-      output = self.tanh(output)
-
-    # nn.Sequential(
-    # ConvTranspose2d(NLAT, DIM * 4, 4, 1, 0, bias=False), BatchNorm2d(DIM * 4), ReLU(inplace=True),
-    # ConvTranspose2d(DIM * 4, DIM * 2, 4, 2, 1, bias=False), BatchNorm2d(DIM * 2), ReLU(inplace=True),
-    # ConvTranspose2d(DIM * 2, DIM, 4, 2, 1, bias=False), BatchNorm2d(DIM), ReLU(inplace=True),
-    # ConvTranspose2d(DIM, NUM_CHANNELS, 4, 2, 1, bias=False), Tanh())
+    output = self.mapping(input)
     if self.shift is not None:
       output = output + self.shift
-    # print(output.shape)
     return output
+
 
 
 class GaussianConditional(nn.Module):

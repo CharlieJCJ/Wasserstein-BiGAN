@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from torch.optim import Adam
 from torch.utils import data
 from torch.nn import Conv2d, BatchNorm2d, LeakyReLU, ReLU, Tanh
+from constants import NUM_CHANNELS
 from util import JointCritic, WALI, ResNetSimCLR, ContrastiveLearningDataset, DeterministicConditional
 from torchvision import datasets, transforms, utils
 import torch.nn.functional as F
@@ -17,6 +18,8 @@ import click
 # from constants import *
 import os
 import datetime
+from torch.nn import Conv2d, ConvTranspose2d, BatchNorm2d, LeakyReLU, ReLU, Tanh
+
 datetime_object = datetime.datetime.now()
 print(datetime_object)
 # os.environ['CUDA_VISIBLE_DEVICES'] = "2, 3, 4, 5"
@@ -262,8 +265,19 @@ def main(model,
     #     schedulerSimCLR.step()
   print("End of training")
 
-def create_generator(H_DIM, IMAGE_SIZE):
-  return Generator(IMAGE_SIZE, H_DIM, 8)
+# def create_generator(H_DIM, IMAGE_SIZE):
+#   return Generator(IMAGE_SIZE, H_DIM, 8)
+
+def create_generator():
+  DIM = 128
+  NUM_CHANNELS = 3
+  mapping = nn.Sequential(
+    ConvTranspose2d(512, DIM * 8, 4, 1, 0, bias=False), BatchNorm2d(DIM * 8), ReLU(inplace=True),
+    ConvTranspose2d(DIM * 8, DIM * 4, 4, 2, 1, bias=False), BatchNorm2d(DIM * 4), ReLU(inplace=True),
+    ConvTranspose2d(DIM * 4, DIM * 2, 4, 2, 1, bias=False), BatchNorm2d(DIM * 2), ReLU(inplace=True),
+    ConvTranspose2d(DIM * 2, DIM, 4, 2, 1, bias=False), BatchNorm2d(DIM), ReLU(inplace=True),
+    ConvTranspose2d(DIM, NUM_CHANNELS, 4, 2, 1, bias=False), Tanh())
+  return DeterministicConditional(mapping)
 
 def create_critic(H_DIM, LEAK, DIM_D, IMAGE_SIZE):
   x_mapping = Discriminator(IMAGE_SIZE)
