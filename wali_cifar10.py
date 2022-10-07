@@ -303,7 +303,7 @@ def create_critic(H_DIM, LEAK, DIM_D, IMAGE_SIZE):
 
 def create_WALI(H_DIM, Z_DIM, LEAK, DIM_D, IMAGE_SIZE):
   E = ResNetSimCLR(H_DIM, Z_DIM)
-  G = create_generator(H_DIM, IMAGE_SIZE)
+  G = create_generator()
   C = create_critic(H_DIM, LEAK, DIM_D, IMAGE_SIZE)
   wali = WALI(E, G, C)
   return wali
