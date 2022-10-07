@@ -69,13 +69,13 @@ class DeterministicConditional(nn.Module):
     self.encoder = encoder
     self.mapping = mapping
     self.shift = shift
-    self.cv0 = ConvTranspose2d(512, DIM * 16, 4, 1, 0, bias=False)
+    # self.cv0 = ConvTranspose2d(512, DIM * 16, 4, 1, 0, bias=False)
     self.cv1 = ConvTranspose2d(DIM * 16, DIM * 8, 4, 1, 0, bias=False)
     self.cv2 = ConvTranspose2d(DIM * 8, DIM * 4, 4, 1, 0, bias=False)
     self.cv3 = ConvTranspose2d(DIM * 4, DIM * 2, 4, 2, 1, bias=False)
     self.cv4 = ConvTranspose2d(DIM * 2, DIM, 4, 2, 1, bias=False)
     self.cv5 = ConvTranspose2d(DIM, NUM_CHANNELS, 4, 2, 1, bias=False)
-    self.bn0 = BatchNorm2d(DIM * 16)
+    # self.bn0 = BatchNorm2d(DIM * 16)
     self.bn1 = BatchNorm2d(DIM * 8)
     self.bn2 = BatchNorm2d(DIM * 4)
     self.bn3 = BatchNorm2d(DIM * 2)
@@ -103,12 +103,6 @@ class DeterministicConditional(nn.Module):
     #   output = self.mapping(input)
     # else: 
     print("I'm a generator")
-    output = self.cv0(input)
-    print("1:", output.shape)
-    output = self.bn0(output)
-    print("2:", output.shape)
-    output = self.rl(output)
-    print("3:", output.shape)
     output = self.cv1(output)
     print("4:", output.shape)
     output = self.bn1(output)
