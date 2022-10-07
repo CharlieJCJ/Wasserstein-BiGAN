@@ -21,7 +21,7 @@ datetime_object = datetime.datetime.now()
 print(datetime_object)
 # os.environ['CUDA_VISIBLE_DEVICES'] = "2, 3, 4, 5"
 WRITER_ITER = 10
-MODELSAVE_ITER = 5000 # save every 5000 batches
+MODELSAVE_ITER = 2000 # save every 5000 batches
 # cudnn.benchmark = False
 torch.manual_seed(1)
 torch.cuda.manual_seed_all(1)
