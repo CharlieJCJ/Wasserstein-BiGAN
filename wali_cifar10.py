@@ -45,11 +45,11 @@ torch.cuda.empty_cache()
 @click.option('--Z_DIM', type=int, help='Latent dimension', default=128, show_default=True)
 @click.option('--NLAT', type=int, help='NLAT', default=512, show_default=True)
 @click.option('--LEAK', type=float, help='Leak', default=0.2, show_default=True)
-@click.option('--C_ITERS', type=int, help='Critic iterations', default=5, show_default=True) # Citer = 5
+@click.option('--C_ITERS', type=int, help='Critic iterations', default=1, show_default=True) # Citer = 5
 @click.option('--EG_ITERS', type=int, help='Encoder / generator iterations', default=1)
 @click.option('--LAMBDAS', type=int, help='Strength of gradient penalty', default=10)
-@click.option('--LEARNING_RATE', type=float, help='Learning rate', default=2e-4, show_default=True)
-@click.option('--BETA1', type=float, help='BETA1', default=0.5)
+@click.option('--LEARNING_RATE', type=float, help='Learning rate', default=0.002, show_default=True)
+@click.option('--BETA1', type=float, help='BETA1', default=0.0, show_default=True)
 @click.option('--BETA2', type=float, help='BETA2', default=0.999)
 @click.option('--VISUAL_NUM', type=int, help='VISUAL_NUM', default=8)
 @click.option('--DATASET', help='Dataset name', type=click.Choice(['cifar10', 'mnist', 'celeba', 'LSUN']), default='cifar10', show_default=True)
@@ -285,6 +285,7 @@ def create_generator():
     ConvTranspose2d(DIM, NUM_CHANNELS, 4, 2, 1, bias=False), Tanh())
   return DeterministicConditional(mapping)
 
+# FIXME - change to VG-GAN discriminator
 def create_critic(H_DIM, LEAK, DIM_D, IMAGE_SIZE):
   x_mapping = Discriminator(IMAGE_SIZE)
   # FIXME -  Question: what is DIM?

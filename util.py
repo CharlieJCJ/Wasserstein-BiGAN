@@ -175,7 +175,7 @@ class GaussianConditional(nn.Module):
       output = output + self.shift
     return output
 
-
+# FIXME - change to VG-GAN discriminator
 class JointCritic(nn.Module):
   def __init__(self, x_mapping, z_mapping, joint_mapping):
     """ A joint Wasserstein critic function.
