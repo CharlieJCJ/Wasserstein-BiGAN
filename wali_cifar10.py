@@ -26,7 +26,7 @@ MODELSAVE_ITER = 2000 # save every 5000 batches
 torch.manual_seed(1)
 torch.cuda.manual_seed_all(1)
 torch.cuda.empty_cache()
-SAMPLESAVE_ITER = 100
+SAMPLESAVE_ITER = 50
 # cudnn.deterministic = True
 
 
@@ -153,6 +153,35 @@ def main(model,
   # torch.save(wali.module.state_dict(), f'{modeldir}/{MODEL}-init.ckpt')
   for curr_iter in range(ITER):
     for batch_idx, (x, _) in enumerate(train_loader, 1):
+      # save model
+      if batch_idx % MODELSAVE_ITER == 0:
+        torch.save(wali.module.state_dict(), f'{modeldir}/{MODEL}-epoch-{curr_iter}-{batch_idx}.ckpt')
+        print(f'Model saved to {modeldir}/{MODEL}-epoch-{curr_iter}-{batch_idx}.ckpt')
+        logging.info(f"Model saved to {modeldir}/{MODEL}-epoch-{curr_iter}-{batch_idx}.ckpt")
+
+        # # plot training loss curve
+        # print(EG_losses, C_losses)
+        # plt.figure(figsize=(10, 5))
+        # plt.title('Training loss curve')
+        # plt.plot(torch.tensor(EG_losses).cpu(), label='Encoder + Generator')
+        # plt.plot(torch.tensor(C_losses).cpu(), label='Critic')
+        # plt.xlabel('Iterations')
+        # plt.ylabel('Loss')
+        # plt.legend()
+        # plt.savefig(f'{traindir}/loss_curve-{curr_iter}-{batch_idx}.png')
+        # print("loss curve saved")
+        # plot reconstructed images and samples
+      if batch_idx % SAMPLESAVE_ITER == 0:
+        print("Sample save to ", f'{traindir}/rect-{curr_iter}-{batch_idx}.png')
+        wali.eval()
+        real_x, rect_x = init_x[:originalBATCH], wali.module.reconstruct(init_x[:originalBATCH]).detach_()
+        rect_imgs = torch.cat((real_x.unsqueeze(1), rect_x.unsqueeze(1)), dim=1) 
+        rect_imgs = rect_imgs.view(originalBATCH * 2, NUM_CHANNELS, IMAGE_SIZE, IMAGE_SIZE).cpu()
+        genr_imgs = wali.module.generate([noise]).detach_().cpu()
+        utils.save_image(rect_imgs * 0.5 + 0.5, f'{traindir}/rect{curr_iter}-{batch_idx}.png')
+        utils.save_image(genr_imgs * 0.5 + 0.5, f'{traindir}/genr{curr_iter}-{batch_idx}.png')
+        wali.train()
+        print("rect, gen images saved")
       running_losses = [0, 0]
       # print("batch_idx: ", batch_idx)
 
@@ -228,35 +257,7 @@ def main(model,
 
       
 
-      # save model
-      if batch_idx % MODELSAVE_ITER == 0:
-        torch.save(wali.module.state_dict(), f'{modeldir}/{MODEL}-epoch-{curr_iter}-{batch_idx}.ckpt')
-        print(f'Model saved to {modeldir}/{MODEL}-epoch-{curr_iter}-{batch_idx}.ckpt')
-        logging.info(f"Model saved to {modeldir}/{MODEL}-epoch-{curr_iter}-{batch_idx}.ckpt")
 
-        # # plot training loss curve
-        # print(EG_losses, C_losses)
-        # plt.figure(figsize=(10, 5))
-        # plt.title('Training loss curve')
-        # plt.plot(torch.tensor(EG_losses).cpu(), label='Encoder + Generator')
-        # plt.plot(torch.tensor(C_losses).cpu(), label='Critic')
-        # plt.xlabel('Iterations')
-        # plt.ylabel('Loss')
-        # plt.legend()
-        # plt.savefig(f'{traindir}/loss_curve-{curr_iter}-{batch_idx}.png')
-        # print("loss curve saved")
-        # plot reconstructed images and samples
-      if batch_idx % SAMPLESAVE_ITER == 0:
-        print("Sample save to ", f'{traindir}/rect-{curr_iter}-{batch_idx}.png')
-        wali.eval()
-        real_x, rect_x = init_x[:originalBATCH], wali.module.reconstruct(init_x[:originalBATCH]).detach_()
-        rect_imgs = torch.cat((real_x.unsqueeze(1), rect_x.unsqueeze(1)), dim=1) 
-        rect_imgs = rect_imgs.view(originalBATCH * 2, NUM_CHANNELS, IMAGE_SIZE, IMAGE_SIZE).cpu()
-        genr_imgs = wali.module.generate([noise]).detach_().cpu()
-        utils.save_image(rect_imgs * 0.5 + 0.5, f'{traindir}/rect{curr_iter}-{batch_idx}.png')
-        utils.save_image(genr_imgs * 0.5 + 0.5, f'{traindir}/genr{curr_iter}-{batch_idx}.png')
-        wali.train()
-        print("rect, gen images saved")
 
     
     
