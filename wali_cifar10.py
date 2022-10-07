@@ -104,7 +104,7 @@ def main(model,
     NUM_CHANNELS = 3
     DIM_D = 8192 
   elif DATASET == 'LSUN':
-    IMAGE_SIZE = 128
+    IMAGE_SIZE = 64
     NUM_CHANNELS = 3
     DIM_D = 8192
     MODELSAVE_ITER = 2000 # LSUN is huge dataset (3M images)
@@ -283,7 +283,7 @@ def create_generator():
     ConvTranspose2d(DIM * 4, DIM * 2, 4, 2, 1, bias=False), BatchNorm2d(DIM * 2), ReLU(inplace=True),
     ConvTranspose2d(DIM * 2, DIM, 4, 2, 1, bias=False), BatchNorm2d(DIM), ReLU(inplace=True),
     ConvTranspose2d(DIM, NUM_CHANNELS, 4, 2, 1, bias=False), Tanh())
-  return DeterministicConditional(mapping, encoder = False)
+  return DeterministicConditional(mapping)
 
 def create_critic(H_DIM, LEAK, DIM_D, IMAGE_SIZE):
   x_mapping = Discriminator(IMAGE_SIZE)
