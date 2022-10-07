@@ -32,19 +32,63 @@ class MaxOut(nn.Module):
     output, _ = input.max(dim=2)
     return output
 
+# # A deterministic conditional mapping. Used as an encoder or a generator.
+# class DeterministicConditional(nn.Module):
+#   def __init__(self, mapping, shift=None):
+#     """ A deterministic conditional mapping. Used as an encoder or a generator.
+#     Args:
+#       mapping: An nn.Sequential module that maps the input to the output deterministically.
+#       shift: A pixel-wise shift added to the output of mapping. Default: None
+#     """
+#     super().__init__()
+
+#     self.mapping = mapping
+#     self.shift = shift
+
+#   def set_shift(self, value):
+#     if self.shift is None:
+#       return
+#     assert list(self.shift.data.size()) == list(value.size())
+#     self.shift.data = value
+
+#   def forward(self, input):
+#     input = input[0]
+#     output = self.mapping(input)
+#     if self.shift is not None:
+#       output = output + self.shift
+#     return output
 # A deterministic conditional mapping. Used as an encoder or a generator.
 class DeterministicConditional(nn.Module):
-  def __init__(self, mapping, shift=None):
+  def __init__(self, mapping, shift=None, encoder = True):
     """ A deterministic conditional mapping. Used as an encoder or a generator.
     Args:
       mapping: An nn.Sequential module that maps the input to the output deterministically.
       shift: A pixel-wise shift added to the output of mapping. Default: None
     """
     super().__init__()
-
+    self.encoder = encoder
     self.mapping = mapping
     self.shift = shift
+    self.cv0 = ConvTranspose2d(512, DIM * 16, 4, 1, 0, bias=False)
+    self.cv1 = ConvTranspose2d(DIM * 16, DIM * 8, 4, 1, 0, bias=False)
+    self.cv2 = ConvTranspose2d(DIM * 8, DIM * 4, 4, 1, 0, bias=False)
+    self.cv3 = ConvTranspose2d(DIM * 4, DIM * 2, 4, 2, 1, bias=False)
+    self.cv4 = ConvTranspose2d(DIM * 2, DIM, 4, 2, 1, bias=False)
+    self.cv5 = ConvTranspose2d(DIM, NUM_CHANNELS, 4, 2, 1, bias=False)
+    self.bn0 = BatchNorm2d(DIM * 16)
+    self.bn1 = BatchNorm2d(DIM * 8)
+    self.bn2 = BatchNorm2d(DIM * 4)
+    self.bn3 = BatchNorm2d(DIM * 2)
+    self.bn4 = BatchNorm2d(DIM)
+    self.rl = ReLU(inplace=True)
+    self.tanh = Tanh()
 
+# mapping = nn.Sequential(
+#     ConvTranspose2d(512, DIM * 8, 4, 1, 0, bias=False), BatchNorm2d(DIM * 8), ReLU(inplace=True),
+#     ConvTranspose2d(DIM * 8, DIM * 4, 4, 2, 1, bias=False), BatchNorm2d(DIM * 4), ReLU(inplace=True),
+#     ConvTranspose2d(DIM * 4, DIM * 2, 4, 2, 1, bias=False), BatchNorm2d(DIM * 2), ReLU(inplace=True),
+#     ConvTranspose2d(DIM * 2, DIM, 4, 2, 1, bias=False), BatchNorm2d(DIM), ReLU(inplace=True),
+#     ConvTranspose2d(DIM, NUM_CHANNELS, 4, 2, 1, bias=False), Tanh())
   def set_shift(self, value):
     if self.shift is None:
       return
@@ -52,10 +96,52 @@ class DeterministicConditional(nn.Module):
     self.shift.data = value
 
   def forward(self, input):
-    input = input[0]
-    output = self.mapping(input)
+    if self.encoder == True: 
+      output = self.mapping(input)
+    else: 
+      output = self.cv0(input)
+      print("1:", output.shape)
+      output = self.bn0(output)
+      print("2:", output.shape)
+      output = self.rl(output)
+      print("3:", output.shape)
+      output = self.cv1(input)
+      print("4:", output.shape)
+      output = self.bn1(output)
+      print("5:", output.shape)
+      output = self.rl(output)
+      print("6:", output.shape)
+      output = self.cv2(output)
+      print("7:", output.shape)
+      output = self.bn2(output)
+      print("8:", output.shape)
+      output = self.rl(output)
+      print("9:", output.shape)
+      output = self.cv3(output)
+      print("10:", output.shape)
+      output = self.bn3(output)
+      print("11:", output.shape)
+      output = self.rl(output)
+      print("12:", output.shape)
+      output = self.cv4(output)
+      print("13:", output.shape)
+      output = self.bn4(output)
+      print("14:", output.shape)
+      output = self.rl(output)
+      print("15:", output.shape)
+      output = self.cv5(output)
+      print("16:", output.shape)
+      output = self.tanh(output)
+      print("17:", output.shape)
+
+    # nn.Sequential(
+    # ConvTranspose2d(NLAT, DIM * 4, 4, 1, 0, bias=False), BatchNorm2d(DIM * 4), ReLU(inplace=True),
+    # ConvTranspose2d(DIM * 4, DIM * 2, 4, 2, 1, bias=False), BatchNorm2d(DIM * 2), ReLU(inplace=True),
+    # ConvTranspose2d(DIM * 2, DIM, 4, 2, 1, bias=False), BatchNorm2d(DIM), ReLU(inplace=True),
+    # ConvTranspose2d(DIM, NUM_CHANNELS, 4, 2, 1, bias=False), Tanh())
     if self.shift is not None:
       output = output + self.shift
+    # print(output.shape)
     return output
 
 
@@ -155,6 +241,7 @@ class WALI(nn.Module):
     return output
 
   def criticize(self, x, z_hat, x_tilde, z):
+    print("x", x.shape, "z_hat", z_hat.shape, "x_tilde", x_tilde.shape, "z", z.shape)
     input_x = torch.cat((x, x_tilde), dim=0)
     input_z = torch.cat((z_hat, z), dim=0)
     output = self.C(input_x, input_z) # TODO: check output here
