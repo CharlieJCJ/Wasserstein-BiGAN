@@ -45,7 +45,7 @@ SAMPLESAVE_ITER = 50
 @click.option('--C_ITERS', type=int, help='Critic iterations', default=1, show_default=True) # Citer = 5
 @click.option('--EG_ITERS', type=int, help='Encoder / generator iterations', default=1)
 @click.option('--LAMBDAS', type=int, help='Strength of gradient penalty', default=10)
-@click.option('--LEARNING_RATE', type=float, help='Learning rate', default=0.002, show_default=True)
+@click.option('--LEARNING_RATE', type=float, help='Learning rate', default=2e-4, show_default=True)
 @click.option('--BETA1', type=float, help='BETA1', default=0.0)
 @click.option('--BETA2', type=float, help='BETA2', default=0.999)
 @click.option('--VISUAL_NUM', type=int, help='VISUAL_NUM', default=8)
