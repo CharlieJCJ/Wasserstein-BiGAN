@@ -42,7 +42,7 @@ SAMPLESAVE_ITER = 50
 @click.option('--Z_DIM', type=int, help='Latent dimension', default=128, show_default=True)
 @click.option('--NLAT', type=int, help='NLAT', default=512, show_default=True)
 @click.option('--LEAK', type=float, help='Leak', default=0.2, show_default=True)
-@click.option('--C_ITERS', type=int, help='Critic iterations', default=1, show_default=True) # Citer = 5
+@click.option('--C_ITERS', type=int, help='Critic iterations', default=10, show_default=True) # Citer = 5
 @click.option('--EG_ITERS', type=int, help='Encoder / generator iterations', default=1)
 @click.option('--LAMBDAS', type=int, help='Strength of gradient penalty', default=10)
 @click.option('--LEARNING_RATE', type=float, help='Learning rate', default=2e-4, show_default=True)
