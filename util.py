@@ -238,6 +238,7 @@ class WALI(nn.Module):
       Reconstruction_loss = nn.MSELoss()(original_imgs, self.generate([h_hat]))    # Need to check this - z is basically vector h? H_DIM, Z_DIM
       return C_loss + Reconstruction_loss, EG_loss + Constrastive_loss
 def info_nce_loss(features, device):
+    print("features", features.shape)
     features = features.reshape((features.shape[0], features.shape[1]))
     labels = torch.cat([torch.arange(BATCH_SIZE) for i in range(N_VIEW)], dim=0)
     labels = (labels.unsqueeze(0) == labels.unsqueeze(1)).float()
