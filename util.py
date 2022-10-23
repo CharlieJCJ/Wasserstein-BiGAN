@@ -311,7 +311,9 @@ class ResNetSimCLR(nn.Module):
         z = self.projection(h)
         # print("Projection z", z.shape)
         h = h.reshape((h.shape[0], h.shape[1], 1, 1))
+        print("h", h.shape)
         z = z.reshape((z.shape[0], z.shape[1], 1, 1))
+        print("z", z.shape)
         return h, z
 
 ############################################################################################################
